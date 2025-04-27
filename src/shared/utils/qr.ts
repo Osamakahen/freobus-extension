@@ -1,8 +1,8 @@
-import { QRCode } from 'qrcode'
+import { toDataURL } from 'qrcode'
 
 export async function generateQRCode(data: string): Promise<string> {
   try {
-    return await QRCode.toDataURL(data, {
+    return await toDataURL(data, {
       errorCorrectionLevel: 'H',
       margin: 2,
       width: 256,

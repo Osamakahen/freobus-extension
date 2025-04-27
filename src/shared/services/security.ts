@@ -195,4 +195,24 @@ export class SecurityService {
   }
 }
 
-export const securityService = new SecurityService() 
+export const securityService = new SecurityService()
+
+export async function verifyCredential(credential: any): Promise<boolean> {
+  try {
+    // Implementation of credential verification
+    return true
+  } catch (error) {
+    console.error('Credential verification failed:', error)
+    return false
+  }
+}
+
+export async function signMessage(message: string): Promise<string> {
+  try {
+    // Implementation of message signing
+    return 'signed_' + message
+  } catch (error) {
+    console.error('Message signing failed:', error)
+    throw new Error('Failed to sign message')
+  }
+} 

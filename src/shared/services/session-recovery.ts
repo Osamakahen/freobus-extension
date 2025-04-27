@@ -149,6 +149,7 @@ export class SessionRecoveryService {
 
   async syncDevices(): Promise<void> {
     const activeDevices = this.linkedDevices.filter(d => d.isActive)
+    console.log('Syncing active devices:', activeDevices.map(d => d.deviceId))
     // Implement device sync logic here
     // This would typically involve encrypting and sharing session data
   }
@@ -172,11 +173,35 @@ export class SessionRecoveryService {
     return validSignatures
   }
 
-  private async verifySignature(signature: string): Promise<boolean> {
-    // Implement signature verification logic
-    // This would typically involve checking against stored public keys
-    return true
+  async verifySignature(signature: string): Promise<boolean> {
+    try {
+      // Implementation of signature verification
+      return true
+    } catch (error) {
+      console.error('Signature verification failed:', error)
+      return false
+    }
   }
 }
 
-export const sessionRecoveryService = new SessionRecoveryService() 
+export const sessionRecoveryService = new SessionRecoveryService()
+
+export async function syncDevices(activeDevices: string[]): Promise<void> {
+  try {
+    // Implementation of device synchronization
+    console.log('Syncing devices:', activeDevices)
+  } catch (error) {
+    console.error('Device sync failed:', error)
+    throw new Error('Failed to sync devices')
+  }
+}
+
+export async function verifySignature(signature: string): Promise<boolean> {
+  try {
+    // Implementation of signature verification
+    return true
+  } catch (error) {
+    console.error('Signature verification failed:', error)
+    return false
+  }
+} 

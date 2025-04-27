@@ -207,13 +207,18 @@ export class TabCoordinator extends EventEmitter {
   }
 
   private broadcastMessage(type: TabMessage['type'], payload: any): void {
-    const message: TabMessage = {
-      type,
-      payload,
-      timestamp: Date.now(),
-      tabId: this.tabId
-    };
-    this.channel.postMessage(message);
+    try {
+      const message: TabMessage = {
+        type,
+        payload,
+        timestamp: Date.now(),
+        tabId: this.tabId
+      };
+      this.channel.postMessage(message);
+    } catch (error) {
+      console.error('Message broadcasting failed:', error);
+      throw new Error('Failed to broadcast message');
+    }
   }
 
   public cleanup(): void {
