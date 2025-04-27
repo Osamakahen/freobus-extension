@@ -87,4 +87,15 @@ export interface StateUpdate {
   type: 'NETWORK' | 'SESSION' | 'PREFERENCES';
   payload: any;
   timestamp: number;
+}
+
+// Wallet Message
+export interface WalletMessage {
+  name: string;
+  body: {
+    type: "CREATE_WALLET" | "UNLOCK_WALLET" | "ADD_ACCOUNT" | "SIGN_TRANSACTION" | 
+          "CONNECT_SITE" | "DISCONNECT_SITE" | "SET_NETWORK" | "GET_SESSION" | 
+          "SIGN_MESSAGE" | "SWITCH_CHAIN";
+    payload?: any;
+  };
 } 

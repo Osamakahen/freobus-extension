@@ -1,6 +1,6 @@
-import type { RequestArguments } from "eip1193-provider"
-import { sendToBackground } from "@plasmohq/messaging"
-import type { WalletMessage } from "../background"
+import type { RequestArguments } from "@metamask/providers"
+import { sendToBackground, type MessageName } from "@plasmohq/messaging"
+import type { WalletMessage } from "../types/WalletMessage"
 
 class FreoBusProvider {
   private connected: boolean = false
@@ -14,8 +14,8 @@ class FreoBusProvider {
 
   private async initialize() {
     const origin = window.location.origin
-    const response = await sendToBackground<WalletMessage>({
-      name: "wallet",
+    const response = await sendToBackground({
+      name: "wallet" as MessageName,
       body: {
         type: "GET_SESSION",
         payload: { origin }
@@ -38,6 +38,10 @@ class FreoBusProvider {
   async request(args: RequestArguments): Promise<unknown> {
     const { method, params } = args
 
+    if (!Array.isArray(params)) {
+      throw new Error("Params must be an array")
+    }
+
     switch (method) {
       case "eth_requestAccounts":
       case "eth_accounts":
@@ -50,10 +54,10 @@ class FreoBusProvider {
         return this.sendTransaction(params[0])
 
       case "personal_sign":
-        return this.signMessage(params[0], params[1])
+        return this.signMessage(params[0] as string, params[1] as string)
 
       case "wallet_switchEthereumChain":
-        return this.switchChain(params[0].chainId)
+        return this.switchChain((params[0] as { chainId: string }).chainId)
 
       default:
         throw new Error(`Method ${method} not supported`)
@@ -61,8 +65,8 @@ class FreoBusProvider {
   }
 
   private async sendTransaction(txParams: any) {
-    const response = await sendToBackground<WalletMessage>({
-      name: "wallet",
+    const response = await sendToBackground({
+      name: "wallet" as MessageName,
       body: {
         type: "SIGN_TRANSACTION",
         payload: txParams
@@ -72,8 +76,8 @@ class FreoBusProvider {
   }
 
   private async signMessage(message: string, address: string) {
-    const response = await sendToBackground<WalletMessage>({
-      name: "wallet",
+    const response = await sendToBackground({
+      name: "wallet" as MessageName,
       body: {
         type: "SIGN_MESSAGE",
         payload: { message, address }
@@ -83,11 +87,14 @@ class FreoBusProvider {
   }
 
   private async switchChain(chainId: string) {
-    const response = await sendToBackground<WalletMessage>({
-      name: "wallet",
+    const response = await sendToBackground({
+      name: "wallet" as MessageName,
       body: {
         type: "SWITCH_CHAIN",
-        payload: { chainId }
+        payload: {
+          origin: window.location.origin,
+          chainId
+        }
       }
     })
 

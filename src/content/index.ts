@@ -1,8 +1,24 @@
 import { injectProvider } from "./provider"
-import { sendToBackground } from "@plasmohq/messaging"
+import { sendToBackground, type MessageName } from "@plasmohq/messaging"
+import type { PlasmoMessaging } from "@plasmohq/messaging"
+import type { WalletRequest } from "../background/wallet-handler"
 
 // Inject provider as early as possible
 injectProvider()
+
+async function switchNetwork(chainId: string) {
+  const response = await sendToBackground({
+    name: "wallet" as MessageName,
+    body: {
+      type: "SWITCH_CHAIN",
+      payload: {
+        origin: window.location.origin,
+        chainId
+      }
+    } as WalletRequest
+  })
+  return response
+}
 
 // Network observer for dApp network requirements
 const networkObserver = new MutationObserver(() => {
@@ -10,27 +26,9 @@ const networkObserver = new MutationObserver(() => {
   if (networkBadge) {
     const networkText = networkBadge.textContent?.toLowerCase()
     if (networkText?.includes('polygon')) {
-      sendToBackground({
-        name: "wallet",
-        body: {
-          type: "SWITCH_CHAIN",
-          payload: {
-            origin: window.location.origin,
-            chainId: "0x89"
-          }
-        }
-      })
+      switchNetwork("0x89")
     } else if (networkText?.includes('ethereum')) {
-      sendToBackground({
-        name: "wallet",
-        body: {
-          type: "SWITCH_CHAIN",
-          payload: {
-            origin: window.location.origin,
-            chainId: "0x1"
-          }
-        }
-      })
+      switchNetwork("0x1")
     }
   }
 })

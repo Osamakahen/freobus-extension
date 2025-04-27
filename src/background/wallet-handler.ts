@@ -2,7 +2,7 @@ import type { PlasmoMessaging } from "@plasmohq/messaging"
 import { walletService } from "../shared/services/wallet"
 import type { Transaction } from "../shared/types/wallet"
 
-interface WalletRequest {
+export interface WalletRequest {
   type: "CREATE_WALLET" | "UNLOCK_WALLET" | "ADD_ACCOUNT" | "SIGN_TRANSACTION" | 
         "CONNECT_SITE" | "DISCONNECT_SITE" | "SET_NETWORK" | "GET_SESSION" | 
         "SIGN_MESSAGE" | "SWITCH_CHAIN"

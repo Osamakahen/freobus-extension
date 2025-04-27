@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { ethers } from 'ethers';
+import { utils } from 'ethers';
 
 interface SecurityConfig {
   enableHardwareAuth: boolean;
@@ -105,7 +105,7 @@ export class SessionSecurityManager extends EventEmitter {
 
   private async verifyEIP4361Signature(auth: SessionAuth): Promise<boolean> {
     try {
-      const recoveredAddress = ethers.verifyMessage(auth.message, auth.signature);
+      const recoveredAddress = utils.verifyMessage(auth.message, auth.signature);
       return recoveredAddress.toLowerCase() === auth.address.toLowerCase();
     } catch (error) {
       this.emit('signatureVerificationFailed', { error, auth });

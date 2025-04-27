@@ -1,5 +1,6 @@
 import { NetworkStateManager } from './network/NetworkStateManager';
 import { TabCoordinator } from './utils/TabCoordinator';
+import { ConnectionRetryManager } from './utils/ConnectionRetryManager';
 import { SessionSecurityManager } from './security/SessionSecurityManager';
 import { EventEmitter } from 'events';
 import { 
@@ -14,6 +15,7 @@ import {
 export class Wallet extends EventEmitter {
   private networkStateManager: NetworkStateManager;
   private tabCoordinator: TabCoordinator;
+  private connectionRetryManager: ConnectionRetryManager;
   private sessionSecurityManager: SessionSecurityManager;
   private state: WalletState;
   private isInitialized: boolean = false;
@@ -22,6 +24,7 @@ export class Wallet extends EventEmitter {
     super();
     this.networkStateManager = new NetworkStateManager();
     this.tabCoordinator = new TabCoordinator();
+    this.connectionRetryManager = new ConnectionRetryManager();
     this.sessionSecurityManager = new SessionSecurityManager();
     this.state = this.initializeState();
     this.setupEventListeners();
@@ -86,6 +89,19 @@ export class Wallet extends EventEmitter {
       this.emit('lockReleased');
     });
 
+    this.tabCoordinator.on('leadershipChanged', ({ newLeader }) => {
+      this.emit('leadershipChanged', { newLeader });
+    });
+
+    // Connection retry events
+    this.connectionRetryManager.on('retryScheduled', ({ origin, attempt, delay }) => {
+      this.emit('connectionRetryScheduled', { origin, attempt, delay });
+    });
+
+    this.connectionRetryManager.on('maxRetriesExceeded', ({ origin, attempt }) => {
+      this.emit('maxRetriesExceeded', { origin, attempt });
+    });
+
     // Session security events
     this.sessionSecurityManager.on('sessionAuthenticated', (session) => {
       this.state.sessions.set(session.origin, session);
@@ -102,13 +118,27 @@ export class Wallet extends EventEmitter {
     if (this.isInitialized) return;
 
     try {
-      // Request tab lock
-      await this.tabCoordinator.requestLock();
+      // Request tab lock with retry
+      await this.connectionRetryManager.retryConnection(
+        'tab-lock',
+        async () => {
+          const success = await this.tabCoordinator.requestLock();
+          if (!success) {
+            throw new WalletError('TAB_LOCK_FAILED', 'Failed to acquire tab lock');
+          }
+          return success;
+        }
+      );
 
-      // Initialize network state
-      const defaultNetwork = await this.networkStateManager.initializeNetworkState(this.state.preferences.defaultChainId);
+      // Initialize network state with retry
+      const defaultNetwork = await this.connectionRetryManager.retryConnection(
+        'network-init',
+        async () => {
+          return this.networkStateManager.initializeNetworkState(this.state.preferences.defaultChainId);
+        }
+      );
+
       this.state.network = defaultNetwork;
-
       this.isInitialized = true;
       this.emit('initialized');
     } catch (error) {
@@ -123,7 +153,12 @@ export class Wallet extends EventEmitter {
     }
 
     try {
-      await this.networkStateManager.switchNetwork(chainId);
+      await this.connectionRetryManager.retryConnection(
+        'network-switch',
+        async () => {
+          await this.networkStateManager.switchNetwork(chainId);
+        }
+      );
     } catch (error) {
       this.emit('error', error);
       throw error;
@@ -152,7 +187,13 @@ export class Wallet extends EventEmitter {
     }
 
     try {
-      const session = await this.sessionSecurityManager.authenticateSession(origin, address);
+      const session = await this.connectionRetryManager.retryConnection(
+        'session-auth',
+        async () => {
+          return this.sessionSecurityManager.authenticateSession(origin, address);
+        }
+      );
+
       this.state.sessions.set(origin, session);
       this.tabCoordinator.broadcastSessionUpdate(session);
       return session;
@@ -179,6 +220,7 @@ export class Wallet extends EventEmitter {
   public cleanup(): void {
     this.networkStateManager.cleanup();
     this.tabCoordinator.cleanup();
+    this.connectionRetryManager.cleanup();
     this.sessionSecurityManager.cleanup();
     this.isInitialized = false;
   }
