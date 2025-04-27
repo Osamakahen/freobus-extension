@@ -2,12 +2,19 @@ import * as React from 'react'
 import { useState, useEffect } from 'react'
 import { walletService } from '../shared/services/wallet'
 import "./style.css"
+import { Network } from '../shared/types/wallet'
 
 const Popup = () => {
   const [accounts, setAccounts] = useState<string[]>([])
   const [balance, setBalance] = useState<string>("0")
   const [isConnected, setIsConnected] = useState(false)
-  const [network, setNetwork] = useState({ chainId: '0x1', currencySymbol: 'ETH' })
+  const [network, setNetwork] = useState<Network>({
+    chainId: '0x1',
+    name: 'Ethereum Mainnet',
+    rpcUrl: 'https://mainnet.infura.io/v3/your-api-key',
+    currencySymbol: 'ETH',
+    blockExplorerUrl: 'https://etherscan.io'
+  })
 
   useEffect(() => {
     const loadWalletData = async () => {
