@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="64" cy="64" r="60" fill="#2563EB"/>
+  
+  <!-- Wallet Base -->
+  <path d="M32 48C32 44.6863 34.6863 42 38 42H90C93.3137 42 96 44.6863 96 48V80C96 83.3137 93.3137 86 90 86H38C34.6863 86 32 83.3137 32 80V48Z" fill="white"/>
+  
+  <!-- Wallet Top Flap -->
+  <path d="M85 42L64 28L43 42" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Blockchain Nodes -->
+  <circle cx="52" cy="64" r="6" fill="#2563EB"/>
+  <circle cx="76" cy="64" r="6" fill="#2563EB"/>
+  
+  <!-- Connection Line -->
+  <line x1="58" y1="64" x2="70" y2="64" stroke="#2563EB" stroke-width="3"/>
+</svg> 
