@@ -2,10 +2,24 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { crx } from '@crxjs/vite-plugin'
 import manifest from './manifest.json'
+import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
     react(),
     crx({ manifest }),
   ],
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        popup: resolve(__dirname, 'src/popup/index.html'),
+        onboarding: resolve(__dirname, 'src/onboarding/index.html')
+      }
+    }
+  },
+  server: {
+    port: 3000
+  }
 }) 
