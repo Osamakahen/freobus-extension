@@ -1,17 +1,39 @@
-import React, { useState } from "react"
+import * as React from 'react'
+import { useState, useEffect } from 'react'
+import { walletService } from '../shared/services/wallet'
 import "./style.css"
 
 const Popup = () => {
   const [accounts, setAccounts] = useState<string[]>([])
   const [balance, setBalance] = useState<string>("0")
   const [isConnected, setIsConnected] = useState(false)
+  const [network, setNetwork] = useState({ chainId: '0x1', currencySymbol: 'ETH' })
+
+  useEffect(() => {
+    const loadWalletData = async () => {
+      try {
+        const walletAccounts = await walletService.getAccounts()
+        setAccounts(walletAccounts.map(acc => acc.address))
+        
+        // Load balance for the first account
+        if (walletAccounts.length > 0) {
+          const account = walletAccounts[0]
+          setBalance(account.balances[network.chainId] || '0')
+        }
+      } catch (error) {
+        console.error('Failed to load wallet data:', error)
+      }
+    }
+
+    loadWalletData()
+  }, [network.chainId])
 
   const connectWallet = async () => {
     try {
-      // TODO: Implement wallet connection
+      await walletService.connectSite(window.location.origin, [], [])
       setIsConnected(true)
     } catch (error) {
-      console.error("Failed to connect wallet:", error)
+      console.error('Failed to connect wallet:', error)
     }
   }
 
@@ -48,7 +70,7 @@ const Popup = () => {
             </div>
             <div className="balance-section">
               <h2>Balance</h2>
-              <p>{balance} ETH</p>
+              <p>{balance} {network.currencySymbol}</p>
             </div>
             <button onClick={disconnectWallet} className="disconnect-button">
               Disconnect

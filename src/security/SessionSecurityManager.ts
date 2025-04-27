@@ -119,9 +119,14 @@ export class SessionSecurityManager extends EventEmitter {
   }
 
   private async requestSignature(address: string, message: string): Promise<string> {
-    // Implementation would depend on the wallet provider
-    // This is a placeholder for the actual implementation
-    return '';
+    try {
+      // Implementation would depend on the wallet provider
+      console.log('Requesting signature for:', { address, message })
+      return 'mock_signature'
+    } catch (error) {
+      console.error('Signature request failed:', error)
+      throw new Error('Failed to request signature')
+    }
   }
 
   private calculateBackoffDelay(origin: string): number {
