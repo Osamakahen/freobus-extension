@@ -21,7 +21,6 @@ interface SuggestionEvent {
 }
 
 export class SmartSuggestionManager extends EventEmitter {
-  private static readonly SUGGESTION_THRESHOLD = 0.7;
   private static readonly MAX_SUGGESTIONS = 3;
   private static readonly PATTERN_WEIGHTS = {
     frequency: 0.4,

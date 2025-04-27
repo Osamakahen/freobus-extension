@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import { WalletError } from '../types';
 
 interface TabMessage {
   type: 'STATE_UPDATE' | 'SESSION_UPDATE' | 'NETWORK_UPDATE' | 'LOCK_REQUEST' | 'LOCK_RELEASE' | 'HEARTBEAT' | 'LEADERSHIP_CLAIM' | 'LEADERSHIP_RESPONSE';

@@ -115,8 +115,7 @@ describe('WalletService', () => {
 
   describe('Message Signing', () => {
     it('should sign a message', async () => {
-      // Initialize wallet state
-      const password = 'test-password'
+      // Remove unused password parameter
       const wallet = ethers.Wallet.createRandom()
       const salt = ethers.utils.randomBytes(32)
       const iv = ethers.utils.randomBytes(16)

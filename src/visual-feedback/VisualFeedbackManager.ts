@@ -29,7 +29,7 @@ export class VisualFeedbackManager extends EventEmitter {
   private static readonly SUCCESS_COLOR = '#4CAF50';
   private static readonly ERROR_COLOR = '#F44336';
   private static readonly WARNING_COLOR = '#FFC107';
-  private static readonly INFO_COLOR = '#2196F3';
+  private static readonly INFO_COLOR = '#3498db';
 
   private metrics: Map<string, ConnectionMetrics> = new Map();
   private activeAnimations: Map<string, AnimationConfig> = new Map();
@@ -99,6 +99,30 @@ export class VisualFeedbackManager extends EventEmitter {
                VisualFeedbackManager.ERROR_COLOR
       }
     } as FeedbackEvent);
+  }
+
+  public async showTransactionPending(txData: any): Promise<void> {
+    // ... existing code ...
+  }
+
+  public async showTransactionSuccess(txData: any): Promise<void> {
+    // ... existing code ...
+  }
+
+  public async showError(data: any): Promise<void> {
+    // ... existing code ...
+  }
+
+  public async showWarning(data: any): Promise<void> {
+    // ... existing code ...
+  }
+
+  public async showInfo(data: any): Promise<void> {
+    // ... existing code ...
+  }
+
+  public async showSuccess(data: any): Promise<void> {
+    // ... existing code ...
   }
 
   private async calculateConnectionMetrics(origin: string): Promise<ConnectionMetrics> {
