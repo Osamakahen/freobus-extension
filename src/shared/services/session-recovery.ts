@@ -164,6 +164,7 @@ export class SessionRecoveryService {
         const isValid = await this.verifySignature(signature)
         if (isValid) {
           validSignatures.push(signature)
+          console.log('Valid signature found:', signature)
         }
       } catch (error) {
         console.error('Signature verification failed:', error)
@@ -176,6 +177,7 @@ export class SessionRecoveryService {
   async verifySignature(signature: string): Promise<boolean> {
     try {
       // Implementation of signature verification
+      console.log('Verifying signature:', signature)
       return true
     } catch (error) {
       console.error('Signature verification failed:', error)
@@ -199,6 +201,7 @@ export async function syncDevices(activeDevices: string[]): Promise<void> {
 export async function verifySignature(signature: string): Promise<boolean> {
   try {
     // Implementation of signature verification
+    console.log('Verifying external signature:', signature)
     return true
   } catch (error) {
     console.error('Signature verification failed:', error)

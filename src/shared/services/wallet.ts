@@ -253,9 +253,8 @@ export class WalletService {
   // Performance Optimizations
   private async handleRequest(method: string, params: any[]): Promise<any> {
     try {
-      // Implementation of request handling
       console.log('Handling request:', method, params)
-      return null
+      return await this.handleActualRequest(method, params)
     } catch (error) {
       console.error('Request handling failed:', error)
       throw new Error('Failed to handle request')
@@ -264,9 +263,16 @@ export class WalletService {
 
   private async handleActualRequest(method: string, params: any[]): Promise<any> {
     try {
-      // Implementation of actual request handling
       console.log('Handling actual request:', method, params)
-      return null
+      // Implementation of actual request handling
+      switch (method) {
+        case 'eth_accounts':
+          return this.state.accounts.map(a => a.address)
+        case 'eth_chainId':
+          return this.state.selectedNetwork.chainId
+        default:
+          throw new Error(`Method ${method} not implemented`)
+      }
     } catch (error) {
       console.error('Actual request handling failed:', error)
       throw new Error('Failed to handle actual request')
@@ -337,9 +343,15 @@ export class WalletService {
   }
 
   private async getSeed(): Promise<string> {
+    if (!this.vault || !this.state.isUnlocked) {
+      throw new Error("Wallet is locked")
+    }
+
     try {
       // Implementation of seed retrieval
-      return 'seed_phrase'
+      const seed = 'test_seed_phrase' // This would be properly decrypted in production
+      console.log('Retrieved seed phrase')
+      return seed
     } catch (error) {
       console.error('Seed retrieval failed:', error)
       throw new Error('Failed to retrieve seed')
