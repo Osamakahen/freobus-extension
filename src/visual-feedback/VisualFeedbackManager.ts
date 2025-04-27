@@ -29,7 +29,6 @@ export class VisualFeedbackManager extends EventEmitter {
   private static readonly SUCCESS_COLOR = '#4CAF50';
   private static readonly ERROR_COLOR = '#F44336';
   private static readonly WARNING_COLOR = '#FFC107';
-  private static readonly INFO_COLOR = '#3498db';
 
   private metrics: Map<string, ConnectionMetrics> = new Map();
   private activeAnimations: Map<string, AnimationConfig> = new Map();
@@ -102,27 +101,75 @@ export class VisualFeedbackManager extends EventEmitter {
   }
 
   public async showTransactionPending(txData: any): Promise<void> {
-    // ... existing code ...
+    this.emit('showFeedback', {
+      type: 'transactionPending',
+      txData,
+      animation: {
+        duration: VisualFeedbackManager.ANIMATION_DURATION,
+        easing: 'ease-in-out',
+        color: VisualFeedbackManager.WARNING_COLOR
+      }
+    } as FeedbackEvent);
   }
 
   public async showTransactionSuccess(txData: any): Promise<void> {
-    // ... existing code ...
+    this.emit('showFeedback', {
+      type: 'transactionSuccess',
+      txData,
+      animation: {
+        duration: VisualFeedbackManager.ANIMATION_DURATION,
+        easing: 'ease-in-out',
+        color: VisualFeedbackManager.SUCCESS_COLOR
+      }
+    } as FeedbackEvent);
   }
 
-  public async showError(data: any): Promise<void> {
-    // ... existing code ...
+  public async showError(message: string): Promise<void> {
+    this.emit('showFeedback', {
+      type: 'error',
+      message,
+      animation: {
+        duration: VisualFeedbackManager.ANIMATION_DURATION,
+        easing: 'ease-in-out',
+        color: VisualFeedbackManager.ERROR_COLOR
+      }
+    } as FeedbackEvent);
   }
 
-  public async showWarning(data: any): Promise<void> {
-    // ... existing code ...
+  public async showWarning(message: string): Promise<void> {
+    this.emit('showFeedback', {
+      type: 'warning',
+      message,
+      animation: {
+        duration: VisualFeedbackManager.ANIMATION_DURATION,
+        easing: 'ease-in-out',
+        color: VisualFeedbackManager.WARNING_COLOR
+      }
+    } as FeedbackEvent);
   }
 
-  public async showInfo(data: any): Promise<void> {
-    // ... existing code ...
+  public async showInfo(message: string): Promise<void> {
+    this.emit('showFeedback', {
+      type: 'info',
+      message,
+      animation: {
+        duration: VisualFeedbackManager.ANIMATION_DURATION,
+        easing: 'ease-in-out',
+        color: VisualFeedbackManager.WARNING_COLOR
+      }
+    } as FeedbackEvent);
   }
 
-  public async showSuccess(data: any): Promise<void> {
-    // ... existing code ...
+  public async showSuccess(message: string): Promise<void> {
+    this.emit('showFeedback', {
+      type: 'success',
+      message,
+      animation: {
+        duration: VisualFeedbackManager.ANIMATION_DURATION,
+        easing: 'ease-in-out',
+        color: VisualFeedbackManager.SUCCESS_COLOR
+      }
+    } as FeedbackEvent);
   }
 
   private async calculateConnectionMetrics(origin: string): Promise<ConnectionMetrics> {
@@ -149,19 +196,23 @@ export class VisualFeedbackManager extends EventEmitter {
     return 0.95;
   }
 
-  private handleConnectionSuccess(data: FeedbackEvent): void {
+  private handleConnectionSuccess(event: FeedbackEvent): void {
     // Handle connection success event
+    console.log('Connection success:', event);
   }
 
-  private handleConnectionError(data: FeedbackEvent): void {
+  private handleConnectionError(event: FeedbackEvent): void {
     // Handle connection error event
+    console.log('Connection error:', event);
   }
 
-  private handleNetworkSwitch(data: FeedbackEvent): void {
+  private handleNetworkSwitch(event: FeedbackEvent): void {
     // Handle network switch event
+    console.log('Network switch:', event);
   }
 
-  private handleTransactionSuccess(data: FeedbackEvent): void {
+  private handleTransactionSuccess(event: FeedbackEvent): void {
     // Handle transaction success event
+    console.log('Transaction success:', event);
   }
 } 
