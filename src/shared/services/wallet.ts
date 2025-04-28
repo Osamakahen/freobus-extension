@@ -49,6 +49,11 @@ export class WalletService {
     await storage.set("walletState", JSON.stringify(this.state))
   }
 
+  // Add this method to expose the wallet state
+  async getState(): Promise<WalletState> {
+    return this.state
+  }
+
   // Vault Management
   async createWallet(password: string): Promise<void> {
     if (this.vault) {
