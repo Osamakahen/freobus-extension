@@ -1,3 +1,4 @@
+import { createRoot } from 'react-dom/client'
 import { useState, useEffect } from 'react'
 import { walletService } from '../shared/services/wallet'
 import { Network } from '../shared/types/wallet'
@@ -20,7 +21,6 @@ const Popup = () => {
       try {
         const walletAccounts = await walletService.getAccounts()
         setAccounts(walletAccounts.map(acc => acc.address))
-        
         // Load balance for the first account
         if (walletAccounts.length > 0) {
           const account = walletAccounts[0]
@@ -30,7 +30,6 @@ const Popup = () => {
         console.error('Failed to load wallet data:', error)
       }
     }
-
     loadWalletData()
   }, [network.chainId])
 
@@ -58,7 +57,6 @@ const Popup = () => {
         <div className="wallet-icon" />
         <h1>FreoBus</h1>
       </header>
-
       <main className="popup-content">
         {!isConnected ? (
           <button onClick={connectWallet} className="connect-button">
@@ -88,4 +86,8 @@ const Popup = () => {
   )
 }
 
-export default Popup 
+const container = document.getElementById('root')
+if (container) {
+  const root = createRoot(container)
+  root.render(<Popup />)
+} 
