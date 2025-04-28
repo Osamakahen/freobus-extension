@@ -4,9 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FreoBus Wallet</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/assets/react-vendor.js" as="script" />
+    <link rel="modulepreload" href="/assets/popup.js" />
+    
+    <!-- Preconnect to important domains -->
+    <link rel="preconnect" href="https://mainnet.infura.io" />
+    <link rel="preconnect" href="https://sepolia.infura.io" />
+    
+    <!-- Inline critical CSS -->
+    <style>
+      .popup-container {
+        width: 360px;
+        min-height: 400px;
+        padding: 16px;
+        background-color: #ffffff;
+      }
+      .loading-spinner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100px;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="/src/popup/index.tsx"></script>
   </body>
 </html> 

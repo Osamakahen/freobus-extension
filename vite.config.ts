@@ -18,7 +18,15 @@ export default defineConfig({
   ],
   build: {
     outDir: 'dist',
-    minify: 'esbuild',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
+    },
+    sourcemap: false,
+    chunkSizeWarningLimit: 500,
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/index.tsx'),
@@ -28,7 +36,11 @@ export default defineConfig({
       output: {
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',
-        assetFileNames: 'assets/[name].[ext]'
+        assetFileNames: 'assets/[name].[ext]',
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'ethers-vendor': ['ethers'],
+        }
       }
     }
   },
@@ -37,6 +49,6 @@ export default defineConfig({
     port: 3000
   },
   optimizeDeps: {
-    include: ['react', 'react-dom']
+    include: ['react', 'react-dom', 'ethers']
   }
 }) 
