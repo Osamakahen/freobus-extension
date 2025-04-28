@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "lint": "eslint . --ext .ts",
-    "vercel-build": "npm install && npm run build"
+    "vercel-build": "npm install && npm run build",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
     "@plasmohq/messaging": "^0.7.1",
@@ -47,6 +48,7 @@
     "eip1193-provider": "^1.0.1",
     "eslint": "^8.2.0",
     "jsdom": "^26.1.0",
+    "sharp": "^0.34.1",
     "terser": "^5.39.0",
     "typescript": "^4.4.4",
     "vite": "^4.4.0",

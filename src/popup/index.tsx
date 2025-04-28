@@ -7,7 +7,6 @@ import './style.css'
 const App = () => {
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [selectedAccount, setSelectedAccount] = useState<Account | null | undefined>(null)
-  const [accounts, setAccounts] = useState<Account[]>([])
   const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null)
   const [networks, setNetworks] = useState<Network[]>([])
 
@@ -16,7 +15,6 @@ const App = () => {
       const state = await walletService.getState()
       setIsUnlocked(state.isUnlocked)
       setSelectedAccount(state.selectedAccount)
-      setAccounts(state.accounts)
       setSelectedNetwork(state.selectedNetwork)
       setNetworks(state.networks)
     }
@@ -29,7 +27,6 @@ const App = () => {
       const state = await walletService.getState()
       setIsUnlocked(state.isUnlocked)
       setSelectedAccount(state.selectedAccount)
-      setAccounts(state.accounts)
     } catch (error) {
       console.error('Failed to create wallet:', error)
     }
