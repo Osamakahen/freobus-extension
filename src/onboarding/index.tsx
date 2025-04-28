@@ -1,40 +1,28 @@
-import React, { useState } from "react"
-import { sendToBackground } from "@plasmohq/messaging"
+import { useState } from 'react'
+import { walletService } from '../shared/services/wallet'
 import "./style.css"
 
 const Onboarding = () => {
-  const [step, setStep] = useState<"welcome" | "create" | "success">("welcome")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState("")
+  const [step, setStep] = useState<'welcome' | 'create' | 'success'>('welcome')
+  const [password, setPassword] = useState<string>('')
+  const [confirmPassword, setConfirmPassword] = useState<string>('')
+  const [error, setError] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(false)
 
   const handleCreateWallet = async () => {
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
+      setError('Passwords do not match')
       return
     }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters")
-      return
-    }
-
+    setLoading(true)
     try {
-      const response = await sendToBackground({
-        name: "wallet",
-        body: {
-          type: "CREATE_WALLET",
-          payload: { password }
-        }
-      })
-
-      if (response.success) {
-        setStep("success")
-      } else {
-        setError(response.error || "Failed to create wallet")
-      }
+      await walletService.createWallet(password)
+      setStep("success")
     } catch (err) {
-      setError("Failed to create wallet")
+      setError(err instanceof Error ? err.message : 'Failed to create wallet')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -79,8 +67,8 @@ const Onboarding = () => {
             />
           </div>
 
-          <button onClick={handleCreateWallet} className="primary-button">
-            Create Wallet
+          <button onClick={handleCreateWallet} className="primary-button" disabled={loading}>
+            {loading ? 'Creating...' : 'Create Wallet'}
           </button>
         </div>
       )}

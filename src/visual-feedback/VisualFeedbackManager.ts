@@ -46,7 +46,7 @@ export class VisualFeedbackManager extends EventEmitter {
   }
 
   public async showConnectionSuccess(origin: string): Promise<void> {
-    const metrics = await this.calculateConnectionMetrics(origin);
+    const metrics = await this.calculateConnectionMetrics();
     this.metrics.set(origin, metrics);
 
     const animation: AnimationConfig = {
@@ -65,7 +65,7 @@ export class VisualFeedbackManager extends EventEmitter {
   }
 
   public async showNetworkSwitch(chainId: string): Promise<void> {
-    const networkHealth = await this.calculateNetworkHealth(chainId);
+    const networkHealth = await this.calculateNetworkHealth();
     
     this.emit('showFeedback', {
       type: 'networkSwitch',
@@ -82,8 +82,8 @@ export class VisualFeedbackManager extends EventEmitter {
   }
 
   public async showTransactionPreview(txData: any): Promise<void> {
-    const gasEstimate = await this.estimateGas(txData);
-    const successProbability = await this.calculateSuccessProbability(txData);
+    const gasEstimate = await this.estimateGas();
+    const successProbability = await this.calculateSuccessProbability();
 
     this.emit('showFeedback', {
       type: 'transactionPreview',
@@ -172,28 +172,24 @@ export class VisualFeedbackManager extends EventEmitter {
     } as FeedbackEvent);
   }
 
-  private async calculateConnectionMetrics(origin: string): Promise<ConnectionMetrics> {
-    // Implementation of connection metrics calculation
+  private async calculateConnectionMetrics(): Promise<ConnectionMetrics> {
     return {
       successRate: 0.95,
       averageResponseTime: 150,
       reliabilityScore: 0.9
-    };
+    }
   }
 
-  private async calculateNetworkHealth(chainId: string): Promise<number> {
-    // Implementation of network health calculation
-    return 0.85;
+  private async calculateNetworkHealth(): Promise<number> {
+    return 0.85
   }
 
-  private async estimateGas(txData: any): Promise<number> {
-    // Implementation of gas estimation
-    return 21000;
+  private async estimateGas(): Promise<number> {
+    return 21000
   }
 
-  private async calculateSuccessProbability(txData: any): Promise<number> {
-    // Implementation of success probability calculation
-    return 0.95;
+  private async calculateSuccessProbability(): Promise<number> {
+    return 0.95
   }
 
   private handleConnectionSuccess(event: FeedbackEvent): void {
@@ -214,5 +210,21 @@ export class VisualFeedbackManager extends EventEmitter {
   private handleTransactionSuccess(event: FeedbackEvent): void {
     // Handle transaction success event
     console.log('Transaction success:', event);
+  }
+
+  public showConnectionStatus(): void {
+    this.emit('showFeedback', { type: 'connectionStatus' })
+  }
+
+  public showNetworkStatus(): void {
+    this.emit('showFeedback', { type: 'networkStatus' })
+  }
+
+  public showTransactionStatus(): void {
+    this.emit('showFeedback', { type: 'transactionStatus' })
+  }
+
+  public showTransactionError(): void {
+    this.emit('showFeedback', { type: 'transactionError' })
   }
 } 

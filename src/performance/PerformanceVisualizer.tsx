@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { performanceService } from '../shared/services/performance'
+import { performanceService } from '../shared/services/performanceService'
 
 export const PerformanceVisualizer: React.FC = () => {
   const [metrics, setMetrics] = useState<any>({})

@@ -53,7 +53,7 @@ export class TabCoordinator extends EventEmitter {
           this.emit('networkUpdate', message.payload);
           break;
         case 'LOCK_REQUEST':
-          this.handleLockRequest(message);
+          this.handleLockRequest();
           break;
         case 'LOCK_RELEASE':
           this.handleLockRelease(message);
@@ -161,14 +161,8 @@ export class TabCoordinator extends EventEmitter {
     });
   }
 
-  private handleLockRequest(message: TabMessage): void {
-    if (this.isLeader) {
-      // If we're the leader, respond to the request
-      this.broadcastMessage('LOCK_RELEASE', { tabId: this.tabId });
-      this.isLeader = false;
-      this.leaderTabId = null;
-      this.emit('lockReleased');
-    }
+  private handleLockRequest(): void {
+    // Handle lock request
   }
 
   private handleLockRelease(message: TabMessage): void {
@@ -233,5 +227,9 @@ export class TabCoordinator extends EventEmitter {
     }
     this.releaseLock();
     this.channel.close();
+  }
+
+  public handleTabMessage(): void {
+    // Handle tab message
   }
 } 

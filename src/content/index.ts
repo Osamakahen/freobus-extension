@@ -1,6 +1,5 @@
 import { injectProvider } from "./provider"
 import { sendToBackground, type MessageName } from "@plasmohq/messaging"
-import type { PlasmoMessaging } from "@plasmohq/messaging"
 import type { WalletRequest } from "../background/wallet-handler"
 
 // Inject provider as early as possible
@@ -41,17 +40,13 @@ networkObserver.observe(document.body, {
 
 // Listen for messages from the page
 window.addEventListener("message", (event) => {
-  // Only accept messages from the same origin
   if (event.source !== window) return
   if (!event.data?.type?.startsWith("FREOBUS_")) return
 
-  // Handle page messages
-  const { type, payload } = event.data
+  const { type } = event.data
   switch (type) {
     case "FREOBUS_READY":
-      // Notify the page that the provider is ready
       window.postMessage({ type: "FREOBUS_PROVIDER_READY" }, "*")
       break
-    // Add more message handlers as needed
   }
 }) 

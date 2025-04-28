@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { VisualFeedbackManager } from './visual-feedback/VisualFeedbackManager';
 import { SmartSuggestionManager } from './smart-suggestions/SmartSuggestionManager';
-import { PerformanceVisualizer } from './performance/PerformanceVisualizer';
+import { performanceService } from './shared/services/performanceService';
 
 interface WowEffectConfig {
   enableAnimations: boolean;
@@ -35,8 +35,8 @@ interface ResourceEvent {
 export class WowEffectManager extends EventEmitter {
   private visualFeedback: VisualFeedbackManager;
   private smartSuggestions: SmartSuggestionManager;
-  private performanceVisualizer: PerformanceVisualizer;
   private config: WowEffectConfig;
+  private metricsInterval: NodeJS.Timeout | null = null;
 
   constructor(config: Partial<WowEffectConfig> = {}) {
     super();
@@ -52,7 +52,6 @@ export class WowEffectManager extends EventEmitter {
 
     this.visualFeedback = new VisualFeedbackManager();
     this.smartSuggestions = new SmartSuggestionManager();
-    this.performanceVisualizer = new PerformanceVisualizer();
   }
 
   public async initialize(): Promise<void> {
@@ -103,7 +102,18 @@ export class WowEffectManager extends EventEmitter {
     }
 
     if (this.config.enablePerformanceMetrics) {
-      await this.performanceVisualizer.showPerformanceMetrics();
+      const metrics = await performanceService.getMetrics();
+      const resourceUsage = await performanceService.getResourceUsage();
+      
+      this.emit('metrics', {
+        type: 'metrics',
+        metrics
+      } as MetricsEvent);
+
+      this.emit('resources', {
+        type: 'resources',
+        usage: resourceUsage
+      } as ResourceEvent);
     }
   }
 
@@ -120,16 +130,26 @@ export class WowEffectManager extends EventEmitter {
   }
 
   private async setupPerformanceMetrics(): Promise<void> {
-    this.performanceVisualizer.on('metricsUpdate', (data: MetricsEvent) => {
-      this.emit('metrics', data);
-    });
+    this.metricsInterval = setInterval(async () => {
+      const metrics = await performanceService.getMetrics();
+      const resourceUsage = await performanceService.getResourceUsage();
+      
+      this.emit('metrics', {
+        type: 'metrics',
+        metrics
+      } as MetricsEvent);
 
-    this.performanceVisualizer.on('resourceUpdate', (data: ResourceEvent) => {
-      this.emit('resources', data);
-    });
+      this.emit('resources', {
+        type: 'resources',
+        usage: resourceUsage
+      } as ResourceEvent);
+    }, this.config.metricsUpdateInterval);
   }
 
   public cleanup(): void {
-    this.performanceVisualizer.cleanup();
+    if (this.metricsInterval) {
+      clearInterval(this.metricsInterval);
+      this.metricsInterval = null;
+    }
   }
 } 

@@ -1,6 +1,5 @@
 import { ethers } from 'ethers'
 import { Storage } from '@plasmohq/storage'
-import { encrypt, decrypt, verifySignature } from '../utils/crypto'
 
 const storage = new Storage()
 

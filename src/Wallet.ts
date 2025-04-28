@@ -51,18 +51,18 @@ export class Wallet extends EventEmitter {
 
   private setupEventListeners(): void {
     // Network state events
-    this.networkStateManager.on('networkSwitched', ({ chainId, state }) => {
+    this.networkStateManager.on('networkSwitched', ({ state }) => {
       this.state.network = state;
       this.tabCoordinator.broadcastNetworkUpdate(state);
       this.emit('networkChanged', state);
     });
 
-    this.networkStateManager.on('networkStateUpdated', ({ chainId, state }) => {
+    this.networkStateManager.on('networkStateUpdated', ({ state }) => {
       this.state.network = state;
       this.emit('networkStateUpdated', state);
     });
 
-    this.networkStateManager.on('networkSwitchError', ({ chainId, error }) => {
+    this.networkStateManager.on('networkSwitchError', ({ error }) => {
       this.emit('error', error);
     });
 

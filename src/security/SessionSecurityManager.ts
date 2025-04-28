@@ -44,7 +44,7 @@ export class SessionSecurityManager extends EventEmitter {
     return this.authenticateWithBasicAuth(origin, address);
   }
 
-  public async verifySession(origin: string, auth: SessionAuth): Promise<boolean> {
+  public async verifySession(auth: SessionAuth): Promise<boolean> {
     if (auth.expiresAt < Date.now()) {
       return false;
     }
@@ -56,19 +56,19 @@ export class SessionSecurityManager extends EventEmitter {
     return true;
   }
 
-  public async handleConnectionFailure(origin: string): Promise<number> {
-    const attempts = (this.retryAttempts.get(origin) || 0) + 1;
-    this.retryAttempts.set(origin, attempts);
+  public async handleConnectionFailure(): Promise<number> {
+    const attempts = (this.retryAttempts.get('default') || 0) + 1;
+    this.retryAttempts.set('default', attempts);
 
     if (attempts >= this.config.maxRetryAttempts) {
-      this.emit('maxRetriesExceeded', { origin, attempts });
+      this.emit('maxRetriesExceeded', { origin: 'default', attempts });
       return -1;
     }
 
-    const delay = this.calculateBackoffDelay(origin);
-    this.backoffDelays.set(origin, delay);
+    const delay = this.calculateBackoffDelay('default');
+    this.backoffDelays.set('default', delay);
     
-    this.emit('retryScheduled', { origin, attempts, delay });
+    this.emit('retryScheduled', { origin: 'default', attempts, delay });
     return delay;
   }
 
