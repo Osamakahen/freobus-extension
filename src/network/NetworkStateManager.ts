@@ -64,8 +64,6 @@ export class NetworkStateManager extends EventEmitter {
   private chainConfigs: Map<string, ChainConfig>;
   private networkStates: Map<string, NetworkState>;
   private debounceTimeout: NodeJS.Timeout | null = null;
-  private currentRpcIndex: Map<string, number> = new Map();
-  private rpcLatencies: Map<string, number[]> = new Map();
 
   constructor(customChainConfigs: Map<string, ChainConfig> = new Map()) {
     super();
@@ -153,36 +151,10 @@ export class NetworkStateManager extends EventEmitter {
     this.emit('networkStateUpdated', { chainId, state: newState });
   }
 
-  private async getOptimalRpcUrl(chainId: string): Promise<string> {
-    const config = this.chainConfigs.get(chainId);
-    if (!config || !config.rpcOptimization?.useMultipleProviders) {
-      return config?.rpcUrls[0] || '';
-    }
-
-    const currentIndex = this.currentRpcIndex.get(chainId) || 0;
-    const latencies = this.rpcLatencies.get(chainId) || [];
-
-    if (config.rpcOptimization.failoverStrategy === 'latency-based' && latencies.length > 0) {
-      const minLatencyIndex = latencies.indexOf(Math.min(...latencies));
-      this.currentRpcIndex.set(chainId, minLatencyIndex);
-      return config.rpcUrls[minLatencyIndex];
-    }
-
-    // Round-robin strategy
-    const nextIndex = (currentIndex + 1) % config.rpcUrls.length;
-    this.currentRpcIndex.set(chainId, nextIndex);
-    return config.rpcUrls[nextIndex];
-  }
-
   public async initializeNetworkState(chainId: string): Promise<NetworkState> {
     const config = this.chainConfigs.get(chainId);
     if (!config) {
       throw new WalletError('INVALID_CHAIN', `Invalid chain ID: ${chainId}`);
-    }
-
-    // Initialize RPC latency tracking
-    if (!this.rpcLatencies.has(chainId)) {
-      this.rpcLatencies.set(chainId, []);
     }
 
     // Initialize network state
@@ -203,7 +175,5 @@ export class NetworkStateManager extends EventEmitter {
       clearTimeout(this.debounceTimeout);
     }
     this.networkStates.clear();
-    this.currentRpcIndex.clear();
-    this.rpcLatencies.clear();
   }
 } 
