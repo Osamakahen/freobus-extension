@@ -1,9 +1,7 @@
 import type { RequestArguments } from "@metamask/providers"
 import { sendToBackground, type MessageName } from "@plasmohq/messaging"
-import type { WalletMessage } from "../types/WalletMessage"
 
 class FreoBusProvider {
-  private connected: boolean = false
   private accounts: string[] = []
   private chainId: string = "0x1" // Mainnet by default
   private listeners: { [event: string]: ((...args: any[]) => void)[] } = {}
@@ -23,7 +21,6 @@ class FreoBusProvider {
     })
 
     if (response.success && response.session) {
-      this.connected = true
       this.accounts = response.session.accounts
       this.chainId = response.session.chainId
 
