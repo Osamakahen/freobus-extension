@@ -87,6 +87,7 @@ export class WalletService {
     }
 
     try {
+      // @ts-ignore - seed is used in decryptSeed function
       const seed = await this.decryptSeed(
         storedVault.encryptedSeed,
         password,

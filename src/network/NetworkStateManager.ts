@@ -185,9 +185,6 @@ export class NetworkStateManager extends EventEmitter {
       this.rpcLatencies.set(chainId, []);
     }
 
-    // Get optimal RPC URL
-    const rpcUrl = await this.getOptimalRpcUrl(chainId);
-
     // Initialize network state
     return {
       chainId,
