@@ -6,14 +6,22 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      // Optimize React for production
+      jsxRuntime: 'automatic',
+      jsxImportSource: 'react',
+      babel: {
+        plugins: ['@babel/plugin-transform-runtime']
+      }
+    }),
     crx({ manifest }),
   ],
   build: {
     outDir: 'dist',
+    minify: 'terser',
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
+        main: resolve(__dirname, 'src/index.tsx'),
         popup: resolve(__dirname, 'src/popup/index.html'),
         onboarding: resolve(__dirname, 'src/onboarding/index.html')
       },
@@ -27,5 +35,8 @@ export default defineConfig({
   base: './',
   server: {
     port: 3000
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom']
   }
 }) 
