@@ -14,11 +14,11 @@ export default defineConfig({
         plugins: ['@babel/plugin-transform-runtime']
       }
     }),
-    crx({ manifest }),
+    crx({ manifest })
   ],
   build: {
     outDir: 'dist',
-    minify: 'terser',
+    minify: 'esbuild',
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/index.tsx'),
