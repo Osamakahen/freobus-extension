@@ -16,9 +16,15 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         popup: resolve(__dirname, 'src/popup/index.html'),
         onboarding: resolve(__dirname, 'src/onboarding/index.html')
+      },
+      output: {
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name].[ext]'
       }
     }
   },
+  base: './',
   server: {
     port: 3000
   }
