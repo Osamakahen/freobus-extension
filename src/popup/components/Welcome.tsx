@@ -10,7 +10,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
       <div className="welcome-content">
         <div className="welcome-hero">
           <div className="wallet-icon large" role="img" aria-label="Wallet icon" />
-          <h1>Welcome to <span className="brand-name">FreoWallet</span></h1>
+          <h1>Welcome to <span className="brand-name">FreoBus</span></h1>
           <p className="subtitle">Your Web3 MasterKey</p>
         </div>
 
@@ -41,8 +41,10 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
 
       <div className="welcome-footer">
         <button 
+          type="button"
           className="connect-button"
           onClick={onGetStarted}
+          aria-label="Get started with FreoBus Wallet"
         >
           Get Started
         </button>
