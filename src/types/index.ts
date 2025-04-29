@@ -45,9 +45,11 @@ export interface NetworkState {
 
 // Wallet State
 export interface WalletState {
-  network: NetworkState;
-  sessions: Map<string, SessionAuth>;
-  preferences: WalletPreferences;
+  isConnected: boolean;
+  accounts: string[];
+  chainId: string;
+  balance: string;
+  network: Network;
 }
 
 // Wallet Preferences
@@ -70,16 +72,13 @@ export interface SessionAuth {
 
 // Transaction
 export interface Transaction {
-  chainId: string;
   from: string;
   to: string;
   value: string;
   data?: string;
   gasLimit?: string;
-  maxFeePerGas?: string;
-  maxPriorityFeePerGas?: string;
+  gasPrice?: string;
   nonce?: number;
-  type?: number;
 }
 
 // State Update
@@ -98,4 +97,112 @@ export interface WalletMessage {
           "SIGN_MESSAGE" | "SWITCH_CHAIN";
     payload?: any;
   };
+}
+
+export interface Network {
+  chainId: string;
+  name: string;
+  rpcUrl: string;
+  symbol: string;
+  explorerUrl: string;
+}
+
+export interface Message {
+  type: MessageType;
+  data: MessageData;
+}
+
+export type MessageType = 
+  | 'initialize'
+  | 'storeData'
+  | 'retrieveData'
+  | 'checkPermission'
+  | 'grantPermission'
+  | 'revokePermission'
+  | 'signTransaction'
+  | 'signMessage'
+  | 'switchNetwork'
+  | 'getAccounts'
+  | 'getBalance'
+  | 'getNetwork';
+
+export type MessageData = 
+  | InitializeData
+  | StoreDataData
+  | RetrieveDataData
+  | CheckPermissionData
+  | GrantPermissionData
+  | RevokePermissionData
+  | SignTransactionData
+  | SignMessageData
+  | SwitchNetworkData
+  | GetBalanceData
+  | EmptyData;
+
+export interface InitializeData {
+  password: string;
+}
+
+export interface StoreDataData {
+  key: string;
+  value: any;
+}
+
+export interface RetrieveDataData {
+  key: string;
+}
+
+export interface CheckPermissionData {
+  origin: string;
+  method: string;
+}
+
+export interface GrantPermissionData {
+  origin: string;
+  methods: string[];
+  expiresIn?: number;
+}
+
+export interface RevokePermissionData {
+  // No required fields
+}
+
+export interface SignTransactionData {
+  transaction: Transaction;
+}
+
+export interface SignMessageData {
+  message: string;
+  address: string;
+}
+
+export interface SwitchNetworkData {
+  chainId: string;
+}
+
+export interface GetBalanceData {
+  address: string;
+}
+
+export interface EmptyData {
+  // No required fields
+}
+
+export interface Response {
+  success: boolean;
+  error?: string;
+  value?: any;
+}
+
+export interface Permission {
+  origin: string;
+  methods: string[];
+  expiresAt?: number;
+}
+
+export interface AccountInfo {
+  address: string;
+  balance: string;
+  network: Network;
+  transactions: Transaction[];
 } 
