@@ -185,4 +185,262 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.form-group input:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.input-help {
+  display: block;
+  margin-top: 4px;
+  color: #666;
+  font-size: 12px;
+}
+
+form {
+  margin-bottom: 16px;
+}
+
+/* Welcome Message */
+.welcome-message {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f0f9ff;
+  border-radius: 8px;
+}
+
+.welcome-message h2 {
+  color: #1e40af;
+  margin-bottom: 8px;
+}
+
+/* Account Section */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.account-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.account-address {
+  font-family: monospace;
+  font-size: 12px;
+  color: #666;
+  word-break: break-all;
+}
+
+.account-balance {
+  margin-top: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #059669;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.icon-button:hover {
+  background-color: #f3f4f6;
+}
+
+.icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tooltip {
+  position: absolute;
+  background: #1e40af;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+/* Network Section */
+.network-section {
+  margin: 24px 0;
+}
+
+.network-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Quick Actions */
+.quick-actions {
+  margin: 24px 0;
+}
+
+.action-button {
+  background-color: #f3f4f6;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-button:hover {
+  background-color: #e5e7eb;
+}
+
+/* Help Section */
+.help-section {
+  background-color: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 24px;
+}
+
+.help-section h3 {
+  color: #1e40af;
+  margin-bottom: 12px;
+}
+
+.help-section ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.help-section li {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #4b5563;
+  padding-left: 20px;
+  position: relative;
+}
+
+.help-section li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #1e40af;
+}
+
+/* Welcome Screen */
+.welcome-screen {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.welcome-hero {
+  margin-bottom: 32px;
+}
+
+.welcome-hero h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+  color: #1e40af;
+}
+
+.welcome-hero .subtitle {
+  color: #4b5563;
+  font-size: 16px;
+  margin: 0;
+}
+
+.wallet-icon.large {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+}
+
+.features-list {
+  margin: 32px 0;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.feature-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.feature-text h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.feature-text p {
+  margin: 0;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.terms-notice {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.terms-notice a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.terms-notice a:hover {
+  text-decoration: underline;
 } 

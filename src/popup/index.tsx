@@ -1,61 +1,80 @@
+import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { useState, useEffect, lazy, Suspense } from 'react'
-import { walletService } from '../shared/services/wallet'
 import type { Account, Network } from '../shared/types/wallet'
+import { walletService } from '../shared/services/wallet'
 import './style.css'
+import Welcome from './components/Welcome'
+import CreateWallet from './components/CreateWallet'
+import WalletContent from './components/WalletContent'
 
-// Lazy load the wallet components
-const WalletContent = lazy(() => import('./components/WalletContent'))
-const CreateWallet = lazy(() => import('./components/CreateWallet'))
+interface WalletState {
+  isUnlocked: boolean
+  selectedAccount?: Account
+  selectedNetwork?: Network
+  networks: Network[]
+}
 
-const App = () => {
-  const [isUnlocked, setIsUnlocked] = useState(false)
-  const [selectedAccount, setSelectedAccount] = useState<Account | null | undefined>(null)
+const App: React.FC = () => {
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(false)
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
   const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null)
   const [networks, setNetworks] = useState<Network[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isCreating, setIsCreating] = useState(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string>('')
+  const [isCreating, setIsCreating] = useState<boolean>(false)
+  const [showWelcome, setShowWelcome] = useState<boolean>(true)
 
   useEffect(() => {
     const loadWalletState = async () => {
       try {
-        setIsLoading(true)
-        setError(null)
-        const state = await walletService.getState()
+        const state = await walletService.getState() as WalletState
         setIsUnlocked(state.isUnlocked)
-        setSelectedAccount(state.selectedAccount)
-        setSelectedNetwork(state.selectedNetwork)
-        setNetworks(state.networks)
+        if (state.isUnlocked && state.selectedAccount && state.selectedNetwork) {
+          setShowWelcome(false)
+          setSelectedAccount(state.selectedAccount)
+          setSelectedNetwork(state.selectedNetwork)
+          setNetworks(state.networks)
+        }
       } catch (err) {
-        console.error('Failed to load wallet state:', err)
-        setError('Failed to load wallet state. Please try again.')
+        console.error('Error loading wallet state:', err)
+        setError('Failed to load wallet state')
       } finally {
         setIsLoading(false)
       }
     }
+
     loadWalletState()
   }, [])
 
-  const handleCreateWallet = async () => {
+  const handleCreateWallet = async (password: string) => {
+    setIsCreating(true)
+    setError('')
     try {
-      setIsCreating(true)
-      setError(null)
-      await walletService.createWallet('your-password') // In production, get this from user input
-      const state = await walletService.getState()
+      console.log('Creating wallet...')
+      await walletService.createWallet(password)
+      console.log('Wallet created successfully')
+      const state = await walletService.getState() as WalletState
       setIsUnlocked(state.isUnlocked)
-      setSelectedAccount(state.selectedAccount)
-    } catch (error) {
-      console.error('Failed to create wallet:', error)
+      if (state.selectedAccount && state.selectedNetwork) {
+        setSelectedAccount(state.selectedAccount)
+        setSelectedNetwork(state.selectedNetwork)
+        setNetworks(state.networks)
+      }
+    } catch (err) {
+      console.error('Error creating wallet:', err)
       setError('Failed to create wallet. Please try again.')
     } finally {
       setIsCreating(false)
     }
   }
 
+  const handleGetStarted = () => {
+    setShowWelcome(false)
+  }
+
   const handleSwitchNetwork = async (chainId: string) => {
     try {
-      setError(null)
+      setError('')
       await walletService.setNetwork(chainId)
       const state = await walletService.getState()
       setSelectedNetwork(state.selectedNetwork)
@@ -67,50 +86,47 @@ const App = () => {
 
   if (isLoading) {
     return (
-      <div className="popup-container" role="dialog" aria-label="FreoBus Wallet">
-        <div className="popup-content">
-          <div className="loading-spinner" role="status">
-            <span className="sr-only">Loading...</span>
-          </div>
-        </div>
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading wallet...</p>
       </div>
     )
   }
 
-  return (
-    <div className="popup-container" role="dialog" aria-label="FreoBus Wallet">
-      <div className="popup-header">
-        <div className="wallet-icon" role="img" aria-label="Wallet icon" />
-        <h1>FreoBus Wallet</h1>
+  if (error) {
+    return (
+      <div className="error-container">
+        <p className="error-message">{error}</p>
       </div>
-      <Suspense fallback={
-        <div className="loading-spinner" role="status">
-          <span className="sr-only">Loading wallet...</span>
-        </div>
-      }>
-        {!isUnlocked ? (
-          <CreateWallet 
-            isCreating={isCreating}
-            setIsCreating={setIsCreating}
-            error={error}
-            onCreateWallet={handleCreateWallet}
-          />
-        ) : (
-          <WalletContent 
-            selectedAccount={selectedAccount}
-            selectedNetwork={selectedNetwork}
-            networks={networks}
-            error={error}
-            onSwitchNetwork={handleSwitchNetwork}
-          />
-        )}
-      </Suspense>
-    </div>
+    )
+  }
+
+  if (showWelcome) {
+    return <Welcome onGetStarted={handleGetStarted} />
+  }
+
+  if (!isUnlocked) {
+    return (
+      <CreateWallet 
+        onCreateWallet={handleCreateWallet} 
+        isCreating={isCreating} 
+        setIsCreating={setIsCreating}
+        error={error}
+      />
+    )
+  }
+
+  return (
+    <WalletContent
+      selectedAccount={selectedAccount}
+      selectedNetwork={selectedNetwork}
+      networks={networks}
+      error={error}
+      onSwitchNetwork={handleSwitchNetwork}
+    />
   )
 }
 
 const container = document.getElementById('root')
-if (container) {
-  const root = createRoot(container)
-  root.render(<App />)
-} 
+const root = createRoot(container!)
+root.render(<App />) 

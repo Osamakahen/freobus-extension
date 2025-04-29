@@ -52,6 +52,7 @@ export class WalletService {
   private derivedKeyCache: Map<string, CryptoKey> = new Map()
   private initPromise: Promise<void>
   private pendingNetworkUpdate: NodeJS.Timeout | null = null
+  private password: string | null = null
 
   constructor() {
     // Make initialization async
@@ -106,14 +107,30 @@ export class WalletService {
   }
 
   // Vault Management
-  async createWallet(password: string): Promise<void> {
+  async hasWallet(): Promise<boolean> {
+    await this.initPromise
+    return this.vault !== null
+  }
+
+  async resetWallet(): Promise<void> {
+    await this.initPromise
+    this.vault = null
+    this.state.isUnlocked = false
+    this.state.accounts = []
+    this.state.selectedAccount = undefined
+    await this.saveState()
+    await storage.remove("vault")
+  }
+
+  async createWallet(password: string, force: boolean = false): Promise<void> {
     await this.initPromise
 
-    if (this.vault) {
-      throw new Error("Wallet already exists")
+    if (this.vault && !force) {
+      throw new Error("Wallet already exists. Use force=true to overwrite existing wallet.")
     }
 
     try {
+      console.log('Starting wallet creation...')
       // Generate new wallet with timeout
       const wallet = await Promise.race([
         ethers.Wallet.createRandom(),
@@ -122,11 +139,18 @@ export class WalletService {
         )
       ]) as ethers.Wallet
 
+      if (!wallet.mnemonic?.phrase) {
+        throw new Error("Failed to generate wallet mnemonic")
+      }
+
+      console.log('Generated new wallet')
       const salt = ethers.utils.randomBytes(32)
       const iv = ethers.utils.randomBytes(16)
 
+      console.log('Encrypting seed phrase...')
       // Encrypt the seed phrase
       const encryptedSeed = await this.encryptSeed(wallet.mnemonic.phrase, password, salt, iv)
+      console.log('Seed phrase encrypted')
 
       // Store the vault
       this.vault = {
@@ -136,24 +160,38 @@ export class WalletService {
         version: 1
       }
 
+      // Store password temporarily for this session
+      this.password = password
+
+      console.log('Storing vault...')
       await storage.set("vault", this.vault)
+      console.log('Vault stored')
       
       // Set wallet as unlocked and save state
       this.state.isUnlocked = true
+      console.log('Saving state...')
       await this.saveState()
+      console.log('State saved')
       
       // Wait for state to be fully saved
       await new Promise(resolve => setTimeout(resolve, 100))
 
+      console.log('Creating initial account...')
       // Create initial account
       await this.addAccount("Account 1")
+      console.log('Initial account created')
     } catch (error) {
       // Reset state if anything fails
       this.vault = null
+      this.password = null
       this.state.isUnlocked = false
       await this.saveState()
-      console.error("Failed to create wallet:", error)
-      throw new Error("Failed to create wallet")
+      console.error('Detailed wallet creation error:', error)
+      if (error instanceof Error) {
+        throw new Error(`Failed to create wallet: ${error.message}`)
+      } else {
+        throw new Error('Failed to create wallet: Unknown error')
+      }
     }
   }
 
@@ -391,10 +429,21 @@ export class WalletService {
   }
 
   private async getSeed(): Promise<string> {
-    if (!this.vault || !this.state.isUnlocked) {
+    if (!this.vault || !this.state.isUnlocked || !this.password) {
       throw new Error("Wallet is locked")
     }
-    return 'test_seed_phrase'
+
+    try {
+      return await this.decryptSeed(
+        this.vault.encryptedSeed,
+        this.password,
+        ethers.utils.arrayify(this.vault.salt),
+        ethers.utils.arrayify(this.vault.iv)
+      )
+    } catch (error) {
+      console.error('Failed to decrypt seed:', error)
+      throw new Error('Failed to decrypt wallet seed')
+    }
   }
 
   async signMessage(message: string, address: string): Promise<string> {
