@@ -23,10 +23,23 @@ const App: React.FC = () => {
   const [error, setError] = useState<string>('')
   const [isCreating, setIsCreating] = useState<boolean>(false)
   const [showWelcome, setShowWelcome] = useState<boolean>(true)
+  const [hasWallet, setHasWallet] = useState<boolean>(false)
 
   useEffect(() => {
-    const loadWalletState = async () => {
+    const initializeWallet = async () => {
       try {
+        // Check if wallet exists
+        const walletExists = await walletService.hasWallet()
+        setHasWallet(walletExists)
+        
+        // If no wallet exists, show welcome screen
+        if (!walletExists) {
+          setShowWelcome(true)
+          setIsLoading(false)
+          return
+        }
+
+        // If wallet exists, load state
         const state = await walletService.getState() as WalletState
         setIsUnlocked(state.isUnlocked)
         if (state.isUnlocked && state.selectedAccount && state.selectedNetwork) {
@@ -36,14 +49,14 @@ const App: React.FC = () => {
           setNetworks(state.networks)
         }
       } catch (err) {
-        console.error('Error loading wallet state:', err)
-        setError('Failed to load wallet state')
+        console.error('Error initializing wallet:', err)
+        setError('Failed to initialize wallet')
       } finally {
         setIsLoading(false)
       }
     }
 
-    loadWalletState()
+    initializeWallet()
   }, [])
 
   const handleCreateWallet = async (password: string) => {
@@ -55,11 +68,13 @@ const App: React.FC = () => {
       console.log('Wallet created successfully')
       const state = await walletService.getState() as WalletState
       setIsUnlocked(state.isUnlocked)
+      setHasWallet(true)
       if (state.selectedAccount && state.selectedNetwork) {
         setSelectedAccount(state.selectedAccount)
         setSelectedNetwork(state.selectedNetwork)
         setNetworks(state.networks)
       }
+      setShowWelcome(false)
     } catch (err) {
       console.error('Error creating wallet:', err)
       setError('Failed to create wallet. Please try again.')
@@ -86,44 +101,40 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading wallet...</p>
+      <div className="popup-container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading wallet...</p>
+        </div>
       </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="error-container">
-        <p className="error-message">{error}</p>
-      </div>
-    )
-  }
-
-  if (showWelcome) {
-    return <Welcome onGetStarted={handleGetStarted} />
-  }
-
-  if (!isUnlocked) {
-    return (
-      <CreateWallet 
-        onCreateWallet={handleCreateWallet} 
-        isCreating={isCreating} 
-        setIsCreating={setIsCreating}
-        error={error}
-      />
     )
   }
 
   return (
-    <WalletContent
-      selectedAccount={selectedAccount}
-      selectedNetwork={selectedNetwork}
-      networks={networks}
-      error={error}
-      onSwitchNetwork={handleSwitchNetwork}
-    />
+    <div className="popup-container">
+      {error && <div className="error-message">{error}</div>}
+      
+      {showWelcome ? (
+        <Welcome onGetStarted={handleGetStarted} />
+      ) : !hasWallet ? (
+        <CreateWallet 
+          onCreateWallet={handleCreateWallet} 
+          isCreating={isCreating} 
+          setIsCreating={setIsCreating}
+          error={error}
+        />
+      ) : !isUnlocked ? (
+        <div>Unlock your wallet</div> // TODO: Add UnlockWallet component
+      ) : (
+        <WalletContent
+          selectedAccount={selectedAccount}
+          selectedNetwork={selectedNetwork}
+          networks={networks}
+          error={error}
+          onSwitchNetwork={handleSwitchNetwork}
+        />
+      )}
+    </div>
   )
 }
 

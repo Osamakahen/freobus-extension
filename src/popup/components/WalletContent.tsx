@@ -2,10 +2,10 @@ import React, { useState } from 'react'
 import type { Account, Network } from '../../shared/types/wallet'
 
 interface WalletContentProps {
-  selectedAccount: Account | null | undefined
+  selectedAccount: Account | null
   selectedNetwork: Network | null
   networks: Network[]
-  error: string | null
+  error: string
   onSwitchNetwork: (chainId: string) => Promise<void>
 }
 
@@ -16,114 +16,145 @@ const WalletContent: React.FC<WalletContentProps> = ({
   error,
   onSwitchNetwork
 }) => {
-  const [showCopied, setShowCopied] = useState(false)
+  const [activeTab, setActiveTab] = useState<'tokens' | 'nfts' | 'activity'>('tokens')
+  const [showNetworkList, setShowNetworkList] = useState(false)
 
-  const copyAddress = async () => {
-    if (selectedAccount?.address) {
-      await navigator.clipboard.writeText(selectedAccount.address)
-      setShowCopied(true)
-      setTimeout(() => setShowCopied(false), 2000)
-    }
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
 
-  const openBlockExplorer = () => {
-    if (selectedAccount?.address && selectedNetwork?.blockExplorerUrl) {
-      window.open(`${selectedNetwork.blockExplorerUrl}/address/${selectedAccount.address}`, '_blank')
-    }
+  const formatBalance = (balance: string) => {
+    return parseFloat(balance || '0').toFixed(4)
   }
 
   return (
-    <div className="popup-content">
-      {error && (
-        <div className="error-message" role="alert">
-          {error}
-        </div>
-      )}
-      
-      <div className="welcome-message">
-        <h2>Welcome to FreoBus Wallet! 🎉</h2>
-        <p>Your wallet is ready to use. Here's what you can do:</p>
-      </div>
+    <div className="wallet-content">
+      {error && <div className="error-message">{error}</div>}
 
-      <div className="wallet-info">
-        <div className="account-section">
-          <div className="section-header">
-            <h2 id="account-heading">Account</h2>
-            <div className="action-buttons">
-              <button 
-                className="icon-button"
-                onClick={copyAddress}
-                title="Copy address"
-                aria-label="Copy address to clipboard"
-              >
-                📋
-                {showCopied && <span className="tooltip">Copied!</span>}
-              </button>
-              <button 
-                className="icon-button"
-                onClick={openBlockExplorer}
-                title="View in block explorer"
-                aria-label="View account in block explorer"
-                disabled={!selectedNetwork?.blockExplorerUrl}
-              >
-                🔍
-              </button>
-            </div>
-          </div>
-          {selectedAccount && (
-            <div 
-              className="account-item"
-              role="region"
-              aria-labelledby="account-heading"
-            >
-              <div className="account-name">{selectedAccount.name}</div>
-              <div className="account-address">{selectedAccount.address}</div>
-              <div className="account-balance">
-                {selectedAccount.balances[selectedNetwork?.chainId || ''] || '0'} {selectedNetwork?.currencySymbol}
-              </div>
+      {/* Header with Network Selector and Account */}
+      <div className="wallet-header">
+        <div className="network-selector" onClick={() => setShowNetworkList(!showNetworkList)}>
+          <div className="network-indicator" />
+          <span>{selectedNetwork?.name || 'Select Network'}</span>
+          <span className="chevron-down">▼</span>
+          
+          {showNetworkList && (
+            <div className="network-dropdown">
+              {networks.map(network => (
+                <div
+                  key={network.chainId}
+                  className={`network-option ${network.chainId === selectedNetwork?.chainId ? 'active' : ''}`}
+                  onClick={() => onSwitchNetwork(network.chainId)}
+                >
+                  <div className="network-option-indicator" />
+                  <span>{network.name}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        <div className="network-section">
-          <h2 id="network-heading">Network</h2>
-          <select 
-            value={selectedNetwork?.chainId} 
-            onChange={(e) => onSwitchNetwork(e.target.value)}
-            aria-labelledby="network-heading"
-            className="network-select"
-          >
-            {networks.map(network => (
-              <option key={network.chainId} value={network.chainId}>
-                {network.name}
-              </option>
-            ))}
-          </select>
+        <div className="account-info">
+          <span className="account-name">{selectedAccount?.name}</span>
+          <span className="account-address">{selectedAccount?.address ? formatAddress(selectedAccount.address) : ''}</span>
         </div>
+      </div>
 
-        <div className="quick-actions">
-          <h2>Quick Actions</h2>
-          <div className="action-buttons">
-            <button className="action-button" onClick={() => {}}>
-              Send
-            </button>
-            <button className="action-button" onClick={() => {}}>
-              Receive
-            </button>
-            <button className="action-button" onClick={() => {}}>
-              Add Token
-            </button>
+      {/* Balance Display */}
+      <div className="balance-display">
+        <h2 className="balance-amount">
+          {selectedAccount?.balances[selectedNetwork?.chainId || ''] 
+            ? `${formatBalance(selectedAccount.balances[selectedNetwork?.chainId || ''])} ${selectedNetwork?.currencySymbol}`
+            : '0.0000 ETH'
+          }
+        </h2>
+        <p className="balance-fiat">$0.00 USD</p>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="action-buttons">
+        <button className="action-button">
+          <span className="action-icon">↓</span>
+          <span>Buy</span>
+        </button>
+        <button className="action-button">
+          <span className="action-icon">↑</span>
+          <span>Send</span>
+        </button>
+        <button className="action-button">
+          <span className="action-icon">↔</span>
+          <span>Swap</span>
+        </button>
+        <button className="action-button">
+          <span className="action-icon">⋮</span>
+          <span>More</span>
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="tabs">
+        <button 
+          className={`tab ${activeTab === 'tokens' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tokens')}
+        >
+          Tokens
+        </button>
+        <button 
+          className={`tab ${activeTab === 'nfts' ? 'active' : ''}`}
+          onClick={() => setActiveTab('nfts')}
+        >
+          NFTs
+        </button>
+        <button 
+          className={`tab ${activeTab === 'activity' ? 'active' : ''}`}
+          onClick={() => setActiveTab('activity')}
+        >
+          Activity
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      <div className="tab-content">
+        {activeTab === 'tokens' && (
+          <div className="token-list">
+            <div className="token-item main-token">
+              <div className="token-icon eth" />
+              <div className="token-info">
+                <span className="token-name">Ethereum</span>
+                <span className="token-balance">
+                  {selectedAccount?.balances[selectedNetwork?.chainId || ''] 
+                    ? formatBalance(selectedAccount.balances[selectedNetwork?.chainId || ''])
+                    : '0.0000'
+                  } ETH
+                </span>
+              </div>
+              <div className="token-value">$0.00 USD</div>
+            </div>
+            
+            <div className="empty-state">
+              <div className="empty-icon">🔍</div>
+              <h3>No tokens found</h3>
+              <p>Get started by adding some tokens to your wallet</p>
+              <button className="secondary-button">Import Tokens</button>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="help-section">
-          <h3>Need Help?</h3>
-          <ul>
-            <li>To receive funds, copy your address and share it with the sender</li>
-            <li>To send funds, click the Send button and enter the recipient's address</li>
-            <li>To view your account on the blockchain, click the 🔍 icon</li>
-          </ul>
-        </div>
+        {activeTab === 'nfts' && (
+          <div className="empty-state">
+            <div className="empty-icon">🖼️</div>
+            <h3>No NFTs found</h3>
+            <p>NFTs you receive will appear here</p>
+          </div>
+        )}
+
+        {activeTab === 'activity' && (
+          <div className="empty-state">
+            <div className="empty-icon">📝</div>
+            <h3>No activity yet</h3>
+            <p>Your transaction history will appear here</p>
+          </div>
+        )}
       </div>
     </div>
   )
