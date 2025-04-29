@@ -137,13 +137,21 @@ export class WalletService {
       }
 
       await storage.set("vault", this.vault)
+      
+      // Set wallet as unlocked and save state
+      this.state.isUnlocked = true
+      await this.saveState()
+      
+      // Wait for state to be fully saved
+      await new Promise(resolve => setTimeout(resolve, 100))
 
       // Create initial account
       await this.addAccount("Account 1")
-      
-      this.state.isUnlocked = true
-      await this.saveState()
     } catch (error) {
+      // Reset state if anything fails
+      this.vault = null
+      this.state.isUnlocked = false
+      await this.saveState()
       console.error("Failed to create wallet:", error)
       throw new Error("Failed to create wallet")
     }
