@@ -1,9 +1,9 @@
-import { injectProvider } from "./provider"
+import { initializeProvider } from "./provider"
 import { sendToBackground, type MessageName } from "@plasmohq/messaging"
 import type { WalletRequest } from "../background/wallet-handler"
 
 // Inject provider as early as possible
-injectProvider()
+initializeProvider()
 
 async function switchNetwork(chainId: string) {
   const response = await sendToBackground({

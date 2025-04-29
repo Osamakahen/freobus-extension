@@ -18,6 +18,22 @@ interface SessionAuth {
   expiresAt: number;
 }
 
+interface SessionMetrics {
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  averageLatency: number;
+  errorRate: number;
+  lastUpdated: number;
+}
+
+interface HealthMetrics {
+  latency: number;
+  errorRate: number;
+  lastSuccessfulRequest: number;
+  connectionStatus: 'healthy' | 'degraded' | 'unhealthy';
+}
+
 export class SessionSecurityManager extends EventEmitter {
   private static readonly DEFAULT_CONFIG: SecurityConfig = {
     enableHardwareAuth: false,
@@ -31,6 +47,10 @@ export class SessionSecurityManager extends EventEmitter {
   private authSessions: Map<string, SessionAuth> = new Map();
   private retryAttempts: Map<string, number> = new Map();
   private backoffDelays: Map<string, number> = new Map();
+  private sessions: Map<string, any> = new Map();
+  private metrics: Map<string, SessionMetrics> = new Map();
+  private healthSubscribers: Map<string, Set<(metrics: HealthMetrics) => void>> = new Map();
+  private analyticsSubscribers: Set<(origin: string, metrics: SessionMetrics) => void> = new Set();
 
   constructor(config: Partial<SecurityConfig> = {}) {
     super();
@@ -139,5 +159,84 @@ export class SessionSecurityManager extends EventEmitter {
     this.authSessions.clear();
     this.retryAttempts.clear();
     this.backoffDelays.clear();
+    this.sessions.clear();
+    this.metrics.clear();
+    this.healthSubscribers.clear();
+    this.analyticsSubscribers.clear();
+  }
+
+  public subscribeToHealth(origin: string, callback: (metrics: HealthMetrics) => void): () => void {
+    if (!this.healthSubscribers.has(origin)) {
+      this.healthSubscribers.set(origin, new Set());
+    }
+    this.healthSubscribers.get(origin)?.add(callback);
+
+    return () => {
+      this.healthSubscribers.get(origin)?.delete(callback);
+    };
+  }
+
+  public subscribeToAnalytics(callback: (origin: string, metrics: SessionMetrics) => void): () => void {
+    this.analyticsSubscribers.add(callback);
+
+    return () => {
+      this.analyticsSubscribers.delete(callback);
+    };
+  }
+
+  public updateMetrics(origin: string, success: boolean, latency: number): void {
+    const currentMetrics = this.metrics.get(origin) || {
+      totalRequests: 0,
+      successfulRequests: 0,
+      failedRequests: 0,
+      averageLatency: 0,
+      errorRate: 0,
+      lastUpdated: Date.now()
+    };
+
+    currentMetrics.totalRequests++;
+    if (success) {
+      currentMetrics.successfulRequests++;
+    } else {
+      currentMetrics.failedRequests++;
+    }
+
+    // Update average latency using exponential moving average
+    currentMetrics.averageLatency = (currentMetrics.averageLatency * 0.9) + (latency * 0.1);
+    currentMetrics.errorRate = currentMetrics.failedRequests / currentMetrics.totalRequests;
+    currentMetrics.lastUpdated = Date.now();
+
+    this.metrics.set(origin, currentMetrics);
+
+    // Notify health subscribers
+    const healthMetrics: HealthMetrics = {
+      latency: currentMetrics.averageLatency,
+      errorRate: currentMetrics.errorRate,
+      lastSuccessfulRequest: success ? Date.now() : currentMetrics.lastUpdated,
+      connectionStatus: this.determineHealthStatus(currentMetrics)
+    };
+
+    this.healthSubscribers.get(origin)?.forEach(callback => {
+      callback(healthMetrics);
+    });
+
+    // Notify analytics subscribers
+    this.analyticsSubscribers.forEach(callback => {
+      callback(origin, currentMetrics);
+    });
+  }
+
+  private determineHealthStatus(metrics: SessionMetrics): 'healthy' | 'degraded' | 'unhealthy' {
+    if (metrics.errorRate > 0.5 || metrics.averageLatency > 1000) return 'unhealthy';
+    if (metrics.errorRate > 0.1 || metrics.averageLatency > 500) return 'degraded';
+    return 'healthy';
+  }
+
+  public getMetrics(origin: string): SessionMetrics | undefined {
+    return this.metrics.get(origin);
+  }
+
+  public getAllMetrics(): Record<string, SessionMetrics> {
+    return Object.fromEntries(this.metrics);
   }
 } 

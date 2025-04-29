@@ -1,3 +1,5 @@
+import { BigNumber } from "ethers";
+
 // Error Types
 export class WalletError extends Error {
   constructor(
@@ -74,11 +76,14 @@ export interface SessionAuth {
 export interface Transaction {
   from: string;
   to: string;
-  value: string;
+  value: BigNumber;
   data?: string;
-  gasLimit?: string;
-  gasPrice?: string;
   nonce?: number;
+  gasLimit?: BigNumber;
+  gasPrice?: BigNumber;
+  maxFeePerGas?: BigNumber;
+  maxPriorityFeePerGas?: BigNumber;
+  chainId: string;
 }
 
 // State Update
@@ -169,6 +174,7 @@ export interface RevokePermissionData {
 
 export interface SignTransactionData {
   transaction: Transaction;
+  origin: string;
 }
 
 export interface SignMessageData {

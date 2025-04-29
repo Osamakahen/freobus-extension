@@ -18,6 +18,7 @@ const WalletContent: React.FC<WalletContentProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'tokens' | 'nfts' | 'activity'>('tokens')
   const [showNetworkList, setShowNetworkList] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`
@@ -33,25 +34,55 @@ const WalletContent: React.FC<WalletContentProps> = ({
 
       {/* Header with Network Selector and Account */}
       <div className="wallet-header">
-        <div className="network-selector" onClick={() => setShowNetworkList(!showNetworkList)}>
-          <div className="network-indicator" />
-          <span>{selectedNetwork?.name || 'Select Network'}</span>
-          <span className="chevron-down">▼</span>
-          
-          {showNetworkList && (
-            <div className="network-dropdown">
-              {networks.map(network => (
-                <div
-                  key={network.chainId}
-                  className={`network-option ${network.chainId === selectedNetwork?.chainId ? 'active' : ''}`}
-                  onClick={() => onSwitchNetwork(network.chainId)}
-                >
-                  <div className="network-option-indicator" />
-                  <span>{network.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="header-top">
+          <div className="network-selector" onClick={() => setShowNetworkList(!showNetworkList)}>
+            <div className="network-indicator" />
+            <span>{selectedNetwork?.name || 'Select Network'}</span>
+            <span className="chevron-down">▼</span>
+            
+            {showNetworkList && (
+              <div className="network-dropdown">
+                {networks.map(network => (
+                  <div
+                    key={network.chainId}
+                    className={`network-option ${network.chainId === selectedNetwork?.chainId ? 'active' : ''}`}
+                    onClick={() => onSwitchNetwork(network.chainId)}
+                  >
+                    <div className="network-option-indicator" />
+                    <span>{network.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button className="menu-button" onClick={() => setShowMenu(!showMenu)}>
+            ⋮
+            {showMenu && (
+              <div className="menu-dropdown">
+                <button className="menu-item">
+                  <span className="menu-icon">🔔</span>
+                  Notifications
+                </button>
+                <button className="menu-item">
+                  <span className="menu-icon">👤</span>
+                  Account details
+                </button>
+                <button className="menu-item">
+                  <span className="menu-icon">🔍</span>
+                  View on explorer
+                </button>
+                <button className="menu-item">
+                  <span className="menu-icon">⚙️</span>
+                  Settings
+                </button>
+                <button className="menu-item">
+                  <span className="menu-icon">🔒</span>
+                  Lock FreoWallet
+                </button>
+              </div>
+            )}
+          </button>
         </div>
 
         <div className="account-info">

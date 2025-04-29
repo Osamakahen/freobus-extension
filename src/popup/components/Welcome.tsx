@@ -10,30 +10,30 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
       <div className="welcome-content">
         <div className="welcome-hero">
           <div className="wallet-icon large" role="img" aria-label="Wallet icon" />
-          <h1>Welcome to FreoBus Wallet</h1>
-          <p className="subtitle">Your gateway to Web3 and decentralized applications</p>
+          <h1>Welcome to <span className="brand-name">FreoWallet</span></h1>
+          <p className="subtitle">Your Web3 MasterKey</p>
         </div>
 
         <div className="features-list">
           <div className="feature-item">
-            <span className="feature-icon">🔒</span>
+            <span className="feature-icon">🛡️</span>
             <div className="feature-text">
-              <h3>Secure Storage</h3>
-              <p>Your keys, your crypto - always encrypted and secure</p>
+              <h3>Secured</h3>
+              <p>Military-grade encryption for your digital assets</p>
             </div>
           </div>
           <div className="feature-item">
-            <span className="feature-icon">💳</span>
+            <span className="feature-icon">⚡</span>
             <div className="feature-text">
-              <h3>Easy Transactions</h3>
-              <p>Send and receive crypto with just a few clicks</p>
+              <h3>Seamless</h3>
+              <p>Effortless transactions and dApp interactions</p>
             </div>
           </div>
           <div className="feature-item">
-            <span className="feature-icon">🌐</span>
+            <span className="feature-icon">💎</span>
             <div className="feature-text">
-              <h3>Web3 Ready</h3>
-              <p>Connect to dApps and explore the decentralized web</p>
+              <h3>Rich</h3>
+              <p>Premium features for the modern Web3 explorer</p>
             </div>
           </div>
         </div>

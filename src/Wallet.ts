@@ -9,7 +9,8 @@ import {
   Transaction, 
   WalletError,
   WalletPreferences,
-  SessionAuth
+  SessionAuth,
+  Network
 } from './types';
 
 export class Wallet extends EventEmitter {
@@ -18,6 +19,8 @@ export class Wallet extends EventEmitter {
   private connectionRetryManager: ConnectionRetryManager;
   private sessionSecurityManager: SessionSecurityManager;
   private state: WalletState;
+  private preferences: WalletPreferences;
+  private sessions: Map<string, SessionAuth>;
   private isInitialized: boolean = false;
 
   constructor() {
@@ -26,40 +29,54 @@ export class Wallet extends EventEmitter {
     this.tabCoordinator = new TabCoordinator();
     this.connectionRetryManager = new ConnectionRetryManager();
     this.sessionSecurityManager = new SessionSecurityManager();
-    this.state = this.initializeState();
-    this.setupEventListeners();
-  }
-
-  private initializeState(): WalletState {
-    return {
+    this.sessions = new Map();
+    this.state = {
+      isConnected: false,
+      accounts: [],
+      chainId: '1',
+      balance: '0',
       network: {
-        chainId: '0x1',
-        isConnected: false,
-        lastBlockNumber: 0,
-        gasPrice: 0,
-        validationErrors: []
-      },
-      sessions: new Map(),
-      preferences: {
-        defaultChainId: '0x1',
-        autoConnect: true,
-        theme: 'light',
-        notifications: true
+        chainId: '1',
+        name: 'Ethereum Mainnet',
+        rpcUrl: 'https://mainnet.infura.io/v3/',
+        symbol: 'ETH',
+        explorerUrl: 'https://etherscan.io'
       }
     };
+    this.preferences = {
+      defaultChainId: '1',
+      autoConnect: true,
+      theme: 'light',
+      notifications: true
+    };
+    this.setupEventListeners();
   }
 
   private setupEventListeners(): void {
     // Network state events
     this.networkStateManager.on('networkSwitched', ({ state }) => {
-      this.state.network = state;
-      this.tabCoordinator.broadcastNetworkUpdate(state);
-      this.emit('networkChanged', state);
+      const network: Network = {
+        chainId: state.chainId,
+        name: this.state.network.name,
+        rpcUrl: this.state.network.rpcUrl,
+        symbol: this.state.network.symbol,
+        explorerUrl: this.state.network.explorerUrl
+      };
+      this.state.network = network;
+      this.tabCoordinator.broadcast('network-update', network);
+      this.emit('networkChanged', network);
     });
 
     this.networkStateManager.on('networkStateUpdated', ({ state }) => {
-      this.state.network = state;
-      this.emit('networkStateUpdated', state);
+      const network: Network = {
+        chainId: state.chainId,
+        name: this.state.network.name,
+        rpcUrl: this.state.network.rpcUrl,
+        symbol: this.state.network.symbol,
+        explorerUrl: this.state.network.explorerUrl
+      };
+      this.state.network = network;
+      this.emit('networkStateUpdated', network);
     });
 
     this.networkStateManager.on('networkSwitchError', ({ error }) => {
@@ -73,7 +90,7 @@ export class Wallet extends EventEmitter {
     });
 
     this.tabCoordinator.on('sessionUpdate', (session) => {
-      this.state.sessions.set(session.origin, session);
+      this.sessions.set(session.origin, session);
       this.emit('sessionUpdate', session);
     });
 
@@ -103,13 +120,8 @@ export class Wallet extends EventEmitter {
     });
 
     // Session security events
-    this.sessionSecurityManager.on('sessionAuthenticated', (session) => {
-      this.state.sessions.set(session.origin, session);
-      this.emit('sessionAuthenticated', session);
-    });
-
     this.sessionSecurityManager.on('sessionExpired', (origin) => {
-      this.state.sessions.delete(origin);
+      this.sessions.delete(origin);
       this.emit('sessionExpired', origin);
     });
   }
@@ -134,47 +146,20 @@ export class Wallet extends EventEmitter {
       const defaultNetwork = await this.connectionRetryManager.retryConnection(
         'network-init',
         async () => {
-          return this.networkStateManager.initializeNetworkState(this.state.preferences.defaultChainId);
+          const networkState = await this.networkStateManager.initializeNetworkState(this.preferences.defaultChainId);
+          return {
+            chainId: networkState.chainId,
+            name: this.state.network.name,
+            rpcUrl: this.state.network.rpcUrl,
+            symbol: this.state.network.symbol,
+            explorerUrl: this.state.network.explorerUrl
+          };
         }
       );
 
       this.state.network = defaultNetwork;
       this.isInitialized = true;
       this.emit('initialized');
-    } catch (error) {
-      this.emit('error', error);
-      throw error;
-    }
-  }
-
-  public async switchNetwork(chainId: string): Promise<void> {
-    if (!this.isInitialized) {
-      throw new WalletError('NOT_INITIALIZED', 'Wallet not initialized');
-    }
-
-    try {
-      await this.connectionRetryManager.retryConnection(
-        'network-switch',
-        async () => {
-          await this.networkStateManager.switchNetwork(chainId);
-        }
-      );
-    } catch (error) {
-      this.emit('error', error);
-      throw error;
-    }
-  }
-
-  public async validateTransaction(transaction: Transaction): Promise<void> {
-    if (!this.isInitialized) {
-      throw new WalletError('NOT_INITIALIZED', 'Wallet not initialized');
-    }
-
-    try {
-      const errors = await this.networkStateManager.validateTransaction(transaction.chainId, transaction);
-      if (errors.length > 0) {
-        throw new WalletError('VALIDATION_ERROR', 'Transaction validation failed', { errors });
-      }
     } catch (error) {
       this.emit('error', error);
       throw error;
@@ -194,8 +179,8 @@ export class Wallet extends EventEmitter {
         }
       );
 
-      this.state.sessions.set(origin, session);
-      this.tabCoordinator.broadcastSessionUpdate(session);
+      this.sessions.set(origin, session);
+      this.tabCoordinator.broadcast('session-update', session);
       return session;
     } catch (error) {
       this.emit('error', error);
@@ -203,25 +188,19 @@ export class Wallet extends EventEmitter {
     }
   }
 
-  public getNetworkState(): NetworkState {
-    return this.state.network;
-  }
-
   public getPreferences(): WalletPreferences {
-    return this.state.preferences;
+    return this.preferences;
   }
 
   public updatePreferences(preferences: Partial<WalletPreferences>): void {
-    this.state.preferences = { ...this.state.preferences, ...preferences };
-    this.tabCoordinator.broadcastStateUpdate({ preferences: this.state.preferences });
-    this.emit('preferencesUpdated', this.state.preferences);
+    this.preferences = { ...this.preferences, ...preferences };
+    this.tabCoordinator.broadcast('state-update', { preferences: this.preferences });
+    this.emit('preferencesUpdated', this.preferences);
   }
 
   public cleanup(): void {
     this.networkStateManager.cleanup();
     this.tabCoordinator.cleanup();
     this.connectionRetryManager.cleanup();
-    this.sessionSecurityManager.cleanup();
-    this.isInitialized = false;
   }
 } 

@@ -1,235 +1,123 @@
 import { EventEmitter } from 'events';
 
-interface TabMessage {
-  type: 'STATE_UPDATE' | 'SESSION_UPDATE' | 'NETWORK_UPDATE' | 'LOCK_REQUEST' | 'LOCK_RELEASE' | 'HEARTBEAT' | 'LEADERSHIP_CLAIM' | 'LEADERSHIP_RESPONSE';
-  payload: any;
-  timestamp: number;
-  tabId: string;
-  claimingTabId?: string;
-  retainsLeadership?: boolean;
+interface TabState {
+  isLeader: boolean;
+  lastActive: number;
+  sessionId: string;
 }
 
 export class TabCoordinator extends EventEmitter {
-  private static readonly CHANNEL_NAME = 'freobus-wallet-coordination';
-  private static readonly LOCK_TIMEOUT = 5000; // 5 seconds
-  private static readonly HEARTBEAT_INTERVAL = 1000; // 1 second
-  private static readonly LEADERSHIP_CLAIM_INTERVAL = 2000; // 2 seconds
-  private static readonly INACTIVITY_THRESHOLD = 30000; // 30 seconds
-
   private channel: BroadcastChannel;
-  private tabId: string;
-  private isLeader: boolean = false;
-  private leaderTabId: string | null = null;
-  private lastHeartbeat: number = 0;
-  private lastActiveTimestamp: number = Date.now();
+  private state: TabState;
+  private leaderTimeout: number = 5000; // 5 seconds
   private heartbeatInterval: NodeJS.Timeout | null = null;
-  private leadershipInterval: NodeJS.Timeout | null = null;
-  private lockTimeout: NodeJS.Timeout | null = null;
 
   constructor() {
     super();
-    this.tabId = crypto.randomUUID();
-    this.channel = new BroadcastChannel(TabCoordinator.CHANNEL_NAME);
-    this.setupListeners();
+    this.channel = new BroadcastChannel('freobus-tab-coordination');
+    this.state = {
+      isLeader: false,
+      lastActive: Date.now(),
+      sessionId: Math.random().toString(36).substring(7)
+    };
+
+    this.setupChannelListeners();
     this.startHeartbeat();
-    this.startLeadershipElection();
-    this.setupActivityTracking();
   }
 
-  private setupListeners(): void {
-    this.channel.addEventListener('message', (event: MessageEvent) => {
-      const message: TabMessage = event.data;
-      
-      if (message.tabId === this.tabId) return; // Ignore own messages
+  private setupChannelListeners(): void {
+    this.channel.addEventListener('message', (event) => {
+      const { type, data } = event.data;
 
-      switch (message.type) {
-        case 'STATE_UPDATE':
-          this.emit('stateUpdate', message.payload);
+      switch (type) {
+        case 'heartbeat':
+          this.handleHeartbeat(data);
           break;
-        case 'SESSION_UPDATE':
-          this.emit('sessionUpdate', message.payload);
+        case 'leadership-claim':
+          this.handleLeadershipClaim(data);
           break;
-        case 'NETWORK_UPDATE':
-          this.emit('networkUpdate', message.payload);
+        case 'state-update':
+          this.handleStateUpdate(data);
           break;
-        case 'LOCK_REQUEST':
-          this.handleLockRequest();
-          break;
-        case 'LOCK_RELEASE':
-          this.handleLockRelease(message);
-          break;
-        case 'HEARTBEAT':
-          this.handleHeartbeat(message);
-          break;
-        case 'LEADERSHIP_CLAIM':
-          this.handleLeadershipClaim(message);
-          break;
-        case 'LEADERSHIP_RESPONSE':
-          this.handleLeadershipResponse(message);
+        case 'session-update':
+          this.handleSessionUpdate(data);
           break;
       }
-    });
-
-    // Handle tab visibility changes
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        this.releaseLock();
-      } else {
-        this.requestLock();
-        this.requestStateSync();
-      }
-    });
-  }
-
-  private setupActivityTracking(): void {
-    ['click', 'keydown', 'mousemove'].forEach(eventType => {
-      window.addEventListener(eventType, () => {
-        this.lastActiveTimestamp = Date.now();
-      });
     });
   }
 
   private startHeartbeat(): void {
     this.heartbeatInterval = setInterval(() => {
-      this.lastHeartbeat = Date.now();
-      if (this.isLeader) {
-        this.broadcastMessage('HEARTBEAT', { timestamp: this.lastHeartbeat });
+      this.broadcast('heartbeat', {
+        sessionId: this.state.sessionId,
+        timestamp: Date.now()
+      });
+
+      if (this.state.isLeader) {
+        this.checkLeadership();
       }
-    }, TabCoordinator.HEARTBEAT_INTERVAL);
+    }, 1000);
   }
 
-  private startLeadershipElection(): void {
-    this.leadershipInterval = setInterval(() => {
-      if (!this.leaderTabId || Date.now() - this.lastHeartbeat > TabCoordinator.INACTIVITY_THRESHOLD) {
-        this.claimLeadership();
-      }
-    }, TabCoordinator.LEADERSHIP_CLAIM_INTERVAL);
-  }
-
-  private handleHeartbeat(message: TabMessage): void {
-    if (message.tabId === this.leaderTabId) {
-      this.lastHeartbeat = message.timestamp;
+  private checkLeadership(): void {
+    const timeSinceLastActive = Date.now() - this.state.lastActive;
+    if (timeSinceLastActive > this.leaderTimeout) {
+      this.state.isLeader = false;
+      this.emit('leadershipChanged', { newLeader: false });
     }
   }
 
-  private handleLeadershipClaim(message: TabMessage): void {
-    if (message.tabId !== this.tabId) {
-      const isOtherTabMoreActive = message.timestamp > this.lastActiveTimestamp;
-      
-      if (this.isLeader && !isOtherTabMoreActive) {
-        // Keep leadership but notify the other tab
-        this.broadcastMessage('LEADERSHIP_RESPONSE', {
-          claimingTabId: message.tabId,
-          retainsLeadership: true
-        });
-      } else if (isOtherTabMoreActive) {
-        // Give up leadership
-        this.isLeader = false;
-        this.leaderTabId = message.tabId;
-        this.emit('leadershipChanged', { newLeader: message.tabId });
-      }
+  private handleHeartbeat(data: any): void {
+    if (data.sessionId !== this.state.sessionId) {
+      this.state.lastActive = Date.now();
     }
   }
 
-  private handleLeadershipResponse(message: TabMessage): void {
-    if (message.claimingTabId === this.tabId && !message.retainsLeadership) {
-      this.isLeader = true;
-      this.leaderTabId = this.tabId;
-      this.emit('leadershipAcquired');
+  private handleLeadershipClaim(data: any): void {
+    if (!this.state.isLeader) {
+      this.state.isLeader = false;
+      this.emit('leadershipChanged', { newLeader: data.sessionId });
     }
   }
 
-  private claimLeadership(): void {
-    this.broadcastMessage('LEADERSHIP_CLAIM', {
-      timestamp: this.lastActiveTimestamp
-    });
+  private handleStateUpdate(data: any): void {
+    this.emit('stateUpdate', data);
+  }
+
+  private handleSessionUpdate(data: any): void {
+    this.emit('sessionUpdate', data);
   }
 
   public async requestLock(): Promise<boolean> {
-    return new Promise((resolve) => {
-      this.broadcastMessage('LOCK_REQUEST', { tabId: this.tabId });
-      
-      // Set a timeout for the lock request
-      this.lockTimeout = setTimeout(() => {
-        if (!this.isLeader) {
-          this.isLeader = true;
-          this.leaderTabId = this.tabId;
-          this.emit('lockAcquired');
-          resolve(true);
-        }
-      }, TabCoordinator.LOCK_TIMEOUT);
+    this.broadcast('leadership-claim', {
+      sessionId: this.state.sessionId,
+      timestamp: Date.now()
     });
-  }
 
-  private handleLockRequest(): void {
-    // Handle lock request
-  }
+    // Wait for any existing leader to respond
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-  private handleLockRelease(message: TabMessage): void {
-    if (message.tabId === this.tabId) {
-      this.isLeader = true;
-      this.leaderTabId = this.tabId;
-      this.emit('lockAcquired');
+    if (!this.state.isLeader) {
+      this.state.isLeader = true;
+      this.emit('leadershipChanged', { newLeader: this.state.sessionId });
+      return true;
     }
+
+    return false;
   }
 
-  public releaseLock(): void {
-    if (this.isLeader) {
-      this.broadcastMessage('LOCK_RELEASE', { tabId: this.tabId });
-      this.isLeader = false;
-      this.leaderTabId = null;
-      this.emit('lockReleased');
-    }
+  public broadcast(type: string, data: any): void {
+    this.channel.postMessage({ type, data });
   }
 
-  public requestStateSync(): void {
-    if (this.leaderTabId) {
-      this.broadcastMessage('STATE_UPDATE', { requestingTabId: this.tabId });
-    }
-  }
-
-  public broadcastStateUpdate(state: any): void {
-    this.broadcastMessage('STATE_UPDATE', state);
-  }
-
-  public broadcastSessionUpdate(session: any): void {
-    this.broadcastMessage('SESSION_UPDATE', session);
-  }
-
-  public broadcastNetworkUpdate(network: any): void {
-    this.broadcastMessage('NETWORK_UPDATE', network);
-  }
-
-  private broadcastMessage(type: TabMessage['type'], payload: any): void {
-    try {
-      const message: TabMessage = {
-        type,
-        payload,
-        timestamp: Date.now(),
-        tabId: this.tabId
-      };
-      this.channel.postMessage(message);
-    } catch (error) {
-      console.error('Message broadcasting failed:', error);
-      throw new Error('Failed to broadcast message');
-    }
+  public getState(): TabState {
+    return { ...this.state };
   }
 
   public cleanup(): void {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
     }
-    if (this.leadershipInterval) {
-      clearInterval(this.leadershipInterval);
-    }
-    if (this.lockTimeout) {
-      clearTimeout(this.lockTimeout);
-    }
-    this.releaseLock();
     this.channel.close();
-  }
-
-  public handleTabMessage(): void {
-    // Handle tab message
   }
 } 
