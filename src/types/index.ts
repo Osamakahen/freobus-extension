@@ -211,4 +211,50 @@ export interface AccountInfo {
   balance: string;
   network: Network;
   transactions: Transaction[];
+}
+
+export interface SessionMetrics {
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  averageLatency: number;
+  errorRate: number;
+  lastUpdated: number;
+}
+
+export interface ConnectionStats {
+  date: string;
+  totalConnections: number;
+  successfulConnections: number;
+  averageLatency: number;
+  errorCount: number;
+}
+
+export interface NetworkSwitchEvent {
+  timestamp: number;
+  fromChainId: string;
+  toChainId: string;
+  success: boolean;
+  latency: number;
+}
+
+export interface PermissionUsageStats {
+  totalRequests: number;
+  byMethod: Record<string, number>;
+  byOrigin: Record<string, number>;
+  errorCount: number;
+}
+
+export interface SessionHealthDashboard {
+  realTimeMetrics: {
+    connectionSuccess: number;
+    averageLatency: number;
+    reconnectAttempts: number;
+    errorFrequency: Record<string, number>;
+  };
+  historicalData: {
+    dailyConnectionStats: ConnectionStats[];
+    networkSwitches: NetworkSwitchEvent[];
+    permissionUsage: PermissionUsageStats;
+  };
 } 
