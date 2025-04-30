@@ -1,8 +1,8 @@
 :root {
-  --gold-gradient: linear-gradient(135deg, #FFD700, #FFA500);
-  --gold-gradient-hover: linear-gradient(135deg, #FFE55C, #FFB347);
-  --gold-light: #FFD700;
-  --gold-dark: #B8860B;
+  --primary-gradient: linear-gradient(135deg, #4CAF50, #45a049);
+  --primary-gradient-hover: linear-gradient(135deg, #45a049, #388E3C);
+  --primary-light: #4CAF50;
+  --primary-dark: #388E3C;
   --text-primary: #1A1A1A;
   --text-secondary: #4A4A4A;
   --background-light: #FFFFFF;
@@ -392,52 +392,43 @@ form {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 24px;
+  max-height: 600px;
+  padding: 16px;
   background-color: var(--background-light);
+  position: relative;
 }
 
 .welcome-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   text-align: center;
+  padding-top: 16px;
+  overflow-y: auto;
 }
 
 .welcome-hero {
-  margin-bottom: 32px;
+  margin-bottom: 20px;
+  padding: 0 16px;
 }
 
 .welcome-hero h1 {
-  font-size: 28px;
-  font-weight: 600;
-  margin: 16px 0 8px;
-  color: var(--text-primary);
-}
-
-.brand-name {
-  color: #4CAF50;
-  font-weight: 700;
-}
-
-.welcome-hero .subtitle {
-  font-size: 16px;
-  color: var(--text-secondary);
-  margin: 0;
+  font-size: 24px;
+  margin: 12px 0 8px;
 }
 
 .features-list {
   width: 100%;
   max-width: 320px;
-  margin: 32px auto;
+  padding: 0 16px;
 }
 
 .feature-item {
   display: flex;
   align-items: flex-start;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 12px;
+  margin-bottom: 12px;
   background-color: var(--background-dark);
   border-radius: 12px;
   transition: transform 0.2s ease;
@@ -474,18 +465,25 @@ form {
   line-height: 1.4;
 }
 
+/* Position the Get Started button in a fixed container */
 .welcome-footer {
-  margin-top: auto;
-  text-align: center;
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--background-light);
+  padding: 16px;
+  box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.05);
+  z-index: 10;
 }
 
 .connect-button {
   width: 100%;
-  padding: 14px 24px;
+  padding: 14px 20px;
   font-size: 16px;
   font-weight: 600;
   color: white;
-  background-color: #4CAF50;
+  background-color: var(--primary-light);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -493,34 +491,21 @@ form {
 }
 
 .connect-button:hover {
-  background-color: #45a049;
+  background-color: var(--primary-dark);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.connect-button:active {
-  transform: translateY(0);
-}
-
-.connect-button:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #4CAF50, 0 0 0 4px rgba(76,175,80,0.3);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
 }
 
 .terms-notice {
-  margin-top: 16px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
+  margin-top: 8px;
+  text-align: center;
 }
 
-.terms-notice a {
-  color: #4CAF50;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.terms-notice a:hover {
-  text-decoration: underline;
+/* Add padding to ensure content doesn't get hidden behind the footer */
+.features-list {
+  padding-bottom: 80px;
 }
 
 .wallet-icon.large {
@@ -557,7 +542,7 @@ form {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--gold-gradient);
+  background: var(--primary-gradient);
   color: white;
   border-radius: 0 0 16px 16px;
 }
@@ -662,7 +647,7 @@ form {
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 4px;
-  background: var(--gold-gradient);
+  background: var(--primary-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -699,7 +684,7 @@ form {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gold-gradient);
+  background: var(--primary-gradient);
   color: white;
   border-radius: 12px;
   font-size: 20px;
@@ -708,8 +693,8 @@ form {
 
 .action-button:hover .action-icon {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
-  background: var(--gold-gradient-hover);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+  background: var(--primary-gradient-hover);
 }
 
 /* Tabs */
@@ -734,7 +719,7 @@ form {
 }
 
 .tab.active {
-  color: var(--gold-dark);
+  color: var(--primary-dark);
 }
 
 .tab.active::after {
@@ -744,7 +729,7 @@ form {
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--gold-gradient);
+  background: var(--primary-gradient);
   border-radius: 2px;
 }
 
