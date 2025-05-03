@@ -9,12 +9,20 @@ export default defineConfig({
     react({
       // Optimize React for production
       jsxRuntime: 'automatic',
-      jsxImportSource: 'react',
+      jsxImportSource: '@emotion/react',
       babel: {
-        plugins: ['@babel/plugin-transform-runtime']
+        plugins: ['@emotion/babel-plugin']
       }
     }),
-    crx({ manifest })
+    crx({
+      manifest: {
+        ...manifest,
+        background: {
+          ...manifest.background,
+          type: 'module' as const
+        }
+      }
+    })
   ],
   build: {
     outDir: 'dist',
@@ -29,9 +37,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 500,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'src/index.tsx'),
         popup: resolve(__dirname, 'src/popup/index.html'),
-        onboarding: resolve(__dirname, 'src/onboarding/index.html')
+        background: resolve(__dirname, 'src/background/index.ts'),
+        content: resolve(__dirname, 'src/content/index.ts')
       },
       output: {
         entryFileNames: 'assets/[name].js',
