@@ -51,11 +51,11 @@ export class PermissionManager extends EventEmitter {
 
   public clearExpiredPermissions(): void {
     const now = Date.now();
-    for (const [origin, permission] of this.permissions.entries()) {
+    this.permissions.forEach((permission, origin) => {
       if (permission.expiresAt && now > permission.expiresAt) {
         this.revokePermission(origin);
       }
-    }
+    });
   }
 
   public getPermissionCount(): number {
