@@ -67,7 +67,10 @@ export class NetworkStateManager extends EventEmitter {
 
   constructor(customChainConfigs: Map<string, ChainConfig> = new Map()) {
     super();
-    this.chainConfigs = new Map([...NetworkStateManager.DEFAULT_CHAIN_CONFIGS, ...customChainConfigs]);
+    this.chainConfigs = new Map(NetworkStateManager.DEFAULT_CHAIN_CONFIGS);
+    customChainConfigs.forEach((value, key) => {
+      this.chainConfigs.set(key, value);
+    });
     this.networkStates = new Map();
   }
 
