@@ -98,6 +98,20 @@ export class WalletService {
     return this.state
   }
 
+  async saveUsername(username: string): Promise<void> {
+    try {
+      await Promise.race([
+        storage.set("username", username),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Saving username timed out")), TIMEOUT)
+        )
+      ])
+    } catch (error) {
+      console.error("Failed to save username:", error)
+      throw new Error("Failed to save username")
+    }
+  }
+
   // Get cached or create new provider
   private getProvider(rpcUrl: string): ethers.providers.JsonRpcProvider {
     if (!providerCache[rpcUrl]) {
