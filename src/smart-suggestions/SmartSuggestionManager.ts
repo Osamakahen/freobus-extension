@@ -70,13 +70,9 @@ export class SmartSuggestionManager extends EventEmitter {
   }
 
   private async analyzeUsagePatterns(origin: string): Promise<UsagePattern[]> {
-    const patterns: UsagePattern[] = [];
-    for (const [key, pattern] of this.usagePatterns.entries()) {
-      if (key !== origin) {
-        patterns.push(pattern);
-      }
-    }
-    return patterns;
+    return Array.from(this.usagePatterns.entries())
+      .filter(([key]) => key !== origin)
+      .map(([_, pattern]) => pattern);
   }
 
   private async calculateNetworkSuggestions(patterns: UsagePattern[]): Promise<string[]> {
