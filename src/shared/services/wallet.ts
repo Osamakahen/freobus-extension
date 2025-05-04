@@ -112,6 +112,16 @@ export class WalletService {
     }
   }
 
+  async setConnected(isConnected: boolean): Promise<void> {
+    try {
+      this.state.isUnlocked = isConnected
+      await this.saveState()
+    } catch (error) {
+      console.error("Failed to set connection state:", error)
+      throw new Error("Failed to set connection state")
+    }
+  }
+
   // Get cached or create new provider
   private getProvider(rpcUrl: string): ethers.providers.JsonRpcProvider {
     if (!providerCache[rpcUrl]) {
