@@ -19,7 +19,8 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["chrome"]
+    "types": ["chrome"],
+    "downlevelIteration": true
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
