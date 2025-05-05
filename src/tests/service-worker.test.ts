@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Message, MessageData, SignTransactionData } from '../types';
+import { Message, SignTransactionData } from '../types';
 import { SecurityManager } from '../security/SecurityManager';
 import { StateManager } from '../state/StateManager';
 import { BigNumber } from 'ethers';

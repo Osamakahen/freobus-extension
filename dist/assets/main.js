@@ -1,1 +1,0 @@
-import{c as e,j as r}from"./client.js";import{r as t}from"./react-vendor.js";const o=()=>r.jsx("div",{children:r.jsx("h1",{children:"FreoBus Wallet"})}),s=document.getElementById("root");s&&e(s).render(r.jsx(t.StrictMode,{children:r.jsx(o,{})}));

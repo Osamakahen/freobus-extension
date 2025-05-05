@@ -34,7 +34,8 @@
       ],
       "matches": [
         "https://*/*"
-      ]
+      ],
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
@@ -43,10 +44,8 @@
         "https://*/*"
       ],
       "resources": [
-        "src/content/provider.ts",
-        "assets/ethers-vendor.js",
-        "assets/react-vendor.js",
-        "assets/index.ts.js"
+        "assets/*",
+        "assets/content.js"
       ],
       "use_dynamic_url": false
     }

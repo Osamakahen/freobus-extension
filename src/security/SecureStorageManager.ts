@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import { utils } from 'ethers';
 
 interface EncryptedData {
   iv: Uint8Array;

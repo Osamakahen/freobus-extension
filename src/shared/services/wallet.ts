@@ -5,9 +5,6 @@ import type { Account, Network, StoredVault, Transaction, WalletState } from "..
 const storage = new Storage()
 const TIMEOUT = 10000 // 10 seconds timeout
 
-// Cache providers to avoid recreation
-const providerCache: Record<string, ethers.providers.JsonRpcProvider> = {}
-
 // Default networks
 const DEFAULT_NETWORKS: Network[] = [
   {
@@ -49,7 +46,6 @@ export class WalletService {
       };
     }
   }
-  private derivedKeyCache: Map<string, CryptoKey> = new Map()
   private initPromise: Promise<void>
   private pendingNetworkUpdate: NodeJS.Timeout | null = null
   private password: string | null = null
@@ -120,14 +116,6 @@ export class WalletService {
       console.error("Failed to set connection state:", error)
       throw new Error("Failed to set connection state")
     }
-  }
-
-  // Get cached or create new provider
-  private getProvider(rpcUrl: string): ethers.providers.JsonRpcProvider {
-    if (!providerCache[rpcUrl]) {
-      providerCache[rpcUrl] = new ethers.providers.JsonRpcProvider(rpcUrl)
-    }
-    return providerCache[rpcUrl]
   }
 
   // Vault Management

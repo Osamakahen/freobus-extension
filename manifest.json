@@ -30,7 +30,7 @@
   "content_scripts": [
     {
       "matches": ["https://*/*"],
-      "js": ["assets/index.ts.js"],
+      "js": ["src/content/index.ts"],
       "run_at": "document_start"
     }
   ],

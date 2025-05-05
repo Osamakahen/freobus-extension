@@ -5,8 +5,6 @@ import { SessionSecurityManager } from './security/SessionSecurityManager';
 import { EventEmitter } from 'events';
 import { 
   WalletState, 
-  NetworkState, 
-  Transaction, 
   WalletError,
   WalletPreferences,
   SessionAuth,
