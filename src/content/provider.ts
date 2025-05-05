@@ -1,13 +1,22 @@
-import { ethers } from 'ethers';
 import { EventEmitter } from 'events';
+
+interface ProviderAccounts {
+  accounts?: string[];
+}
+
+interface ProviderChainId {
+  chainId?: string;
+}
 
 class FreoBusProvider extends EventEmitter {
   private isInitialized = false;
   private accounts: string[] = [];
   private chainId: string = "0x1";
+  private _eventEmitter: EventEmitter;
 
   constructor() {
     super();
+    this._eventEmitter = new EventEmitter();
     console.log('FreoBusProvider: Initializing...');
     this.initialize();
   }
@@ -30,22 +39,22 @@ class FreoBusProvider extends EventEmitter {
       this.isInitialized = true;
       
       // Initialize accounts and chainId
-      const [accounts, chainId] = await Promise.all([
-        this.sendMessage('eth_accounts', {}),
-        this.sendMessage('eth_chainId', {})
+      const [accountsResponse, chainIdResponse] = await Promise.all([
+        this.sendMessage('eth_accounts', {}) as Promise<ProviderAccounts>,
+        this.sendMessage('eth_chainId', {}) as Promise<ProviderChainId>
       ]);
       
-      console.log('FreoBusProvider: Initial accounts:', accounts);
-      console.log('FreoBusProvider: Initial chainId:', chainId);
+      console.log('FreoBusProvider: Initial accounts:', accountsResponse);
+      console.log('FreoBusProvider: Initial chainId:', chainIdResponse);
       
-      this.accounts = accounts || [];
-      this.chainId = chainId || "0x1";
+      this.accounts = accountsResponse?.accounts || [];
+      this.chainId = chainIdResponse?.chainId || "0x1";
       
       // Emit initial events
       if (this.accounts.length > 0) {
         console.log('FreoBusProvider: Emitting initial events');
-        this.emit('connect', { chainId: this.chainId });
-        this.emit('accountsChanged', this.accounts);
+        this._eventEmitter.emit('connect', { chainId: this.chainId });
+        this._eventEmitter.emit('accountsChanged', this.accounts);
       }
       
       console.log('FreoBusProvider: Initialization complete');
@@ -67,7 +76,10 @@ class FreoBusProvider extends EventEmitter {
           return result;
         } catch (error) {
           console.error('FreoBusProvider: Request error:', error);
-          throw new Error(`FreoBus: ${error.message}`);
+          if (error instanceof Error) {
+            throw new Error(`FreoBus: ${error.message}`);
+          }
+          throw new Error('FreoBus: Unknown error');
         }
       },
       send: async (request: { method: string; params?: any[] }, callback: (error: any, result: any) => void) => {
@@ -83,11 +95,11 @@ class FreoBusProvider extends EventEmitter {
       },
       on: (event: string, handler: (...args: any[]) => void) => {
         console.log('FreoBusProvider: Adding event listener:', event);
-        this.on(event, handler);
+        this._eventEmitter.on(event, handler);
       },
       removeListener: (event: string, handler: (...args: any[]) => void) => {
         console.log('FreoBusProvider: Removing event listener:', event);
-        this.removeListener(event, handler);
+        this._eventEmitter.removeListener(event, handler);
       },
       // Add other EIP-1193 required methods
       isConnected: () => {
@@ -95,7 +107,8 @@ class FreoBusProvider extends EventEmitter {
         return this.isInitialized;
       },
       chainId: this.chainId,
-      selectedAddress: this.accounts[0] || null
+      selectedAddress: this.accounts[0] || null,
+      _eventEmitter: this._eventEmitter // Expose for testing
     };
 
     // Inject the provider into the window object

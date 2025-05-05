@@ -14,6 +14,7 @@
     "generate-icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
     "@plasmohq/messaging": "^0.7.1",
     "@plasmohq/storage": "^1.15.0",
     "@types/qrcode": "^1.5.5",
@@ -30,6 +31,7 @@
     "@babel/preset-react": "^7.24.0",
     "@babel/preset-typescript": "^7.24.0",
     "@crxjs/vite-plugin": "^2.0.0-beta.20",
+    "@emotion/babel-plugin": "^11.13.5",
     "@metamask/providers": "^22.0.1",
     "@rollup/plugin-terser": "^0.4.4",
     "@testing-library/jest-dom": "^6.6.3",

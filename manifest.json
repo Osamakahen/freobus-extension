@@ -30,12 +30,13 @@
   "content_scripts": [
     {
       "matches": ["https://*/*"],
-      "js": ["src/content/index.ts"]
+      "js": ["assets/index.ts.js"],
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["src/content/provider.ts"],
+      "resources": ["assets/*"],
       "matches": ["https://*/*"]
     }
   ]
