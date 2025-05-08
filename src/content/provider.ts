@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { ethers } from 'ethers';
 
 interface ProviderAccounts {
   accounts?: string[];
@@ -11,12 +12,15 @@ interface ProviderChainId {
 class FreoBusProvider extends EventEmitter {
   private isInitialized = false;
   private accounts: string[] = [];
-  private chainId: string = "0x1";
+  private chainId: string = "0xaa36a7";
+  private rpcUrl: string = "https://rpc.sepolia.org";
   private _eventEmitter: EventEmitter;
+  private ethersProvider: ethers.providers.JsonRpcProvider;
 
   constructor() {
     super();
     this._eventEmitter = new EventEmitter();
+    this.ethersProvider = new ethers.providers.JsonRpcProvider(this.rpcUrl);
     console.log('FreoBusProvider: Initializing...');
     this.initialize();
   }
@@ -71,9 +75,24 @@ class FreoBusProvider extends EventEmitter {
       request: async (args: { method: string; params?: any[] }) => {
         console.log('FreoBusProvider: Handling request:', args.method);
         try {
-          const result = await this.sendMessage(args.method, { params: args.params });
-          console.log('FreoBusProvider: Request result:', result);
-          return result;
+          switch (args.method) {
+            case 'eth_chainId':
+              return this.chainId;
+            case 'eth_accounts':
+              return this.accounts;
+            case 'eth_blockNumber':
+              return (await this.ethersProvider.getBlockNumber()).toString();
+            case 'eth_getBalance': {
+              const [address, blockTag] = args.params || [];
+              return (await this.ethersProvider.getBalance(address, blockTag)).toHexString();
+            }
+            // Add more methods as needed
+            default:
+              // Fallback to extension messaging for unhandled methods
+              const result = await this.sendMessage(args.method, { params: args.params });
+              console.log('FreoBusProvider: Request result:', result);
+              return result;
+          }
         } catch (error) {
           console.error('FreoBusProvider: Request error:', error);
           if (error instanceof Error) {

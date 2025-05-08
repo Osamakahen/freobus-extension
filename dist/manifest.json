@@ -45,6 +45,8 @@
       ],
       "resources": [
         "assets/*",
+        "assets/ethers-vendor.js",
+        "assets/react-vendor.js",
         "assets/content.js"
       ],
       "use_dynamic_url": false
