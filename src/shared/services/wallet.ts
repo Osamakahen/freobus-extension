@@ -20,6 +20,13 @@ const DEFAULT_NETWORKS: Network[] = [
     rpcUrl: "https://sepolia.infura.io/v3/6131105f1e4c4841a297c5392effa977",
     currencySymbol: "ETH",
     blockExplorerUrl: "https://sepolia.etherscan.io"
+  },
+  {
+    chainId: "0xa",
+    name: "Optimism",
+    rpcUrl: "https://mainnet.optimism.io",
+    currencySymbol: "ETH",
+    blockExplorerUrl: "https://optimistic.etherscan.io"
   }
 ]
 
@@ -134,7 +141,7 @@ export class WalletService {
     await storage.remove("vault")
   }
 
-  async createWallet(password: string, force: boolean = false): Promise<void> {
+  async createWallet(password: string, force: boolean = false, mnemonic?: string): Promise<void> {
     await this.initPromise
 
     if (this.vault && !force) {
@@ -143,13 +150,18 @@ export class WalletService {
 
     try {
       console.log('Starting wallet creation...')
-      // Generate new wallet with timeout
-      const wallet = await Promise.race([
-        ethers.Wallet.createRandom(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Wallet creation timed out")), TIMEOUT)
-        )
-      ]) as ethers.Wallet
+      // Use provided mnemonic or generate new wallet
+      let wallet: ethers.Wallet
+      if (mnemonic) {
+        wallet = ethers.Wallet.fromMnemonic(mnemonic)
+      } else {
+        wallet = await Promise.race([
+          ethers.Wallet.createRandom(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Wallet creation timed out")), TIMEOUT)
+          )
+        ]) as ethers.Wallet
+      }
 
       if (!wallet.mnemonic?.phrase) {
         throw new Error("Failed to generate wallet mnemonic")
@@ -247,7 +259,8 @@ export class WalletService {
       address: wallet.address,
       name: name || `Account ${index + 1}`,
       index,
-      balances: {}
+      balances: {},
+      privateKey: wallet.privateKey // For development/testing only
     }
 
     this.state.accounts.push(account)
@@ -475,6 +488,23 @@ export class WalletService {
 
     const signature = await wallet.signMessage(message)
     return signature
+  }
+
+  async importAccountFromPrivateKey(privateKey: string, name?: string): Promise<Account> {
+    if (!this.vault || !this.state.isUnlocked) {
+      throw new Error("Wallet is locked")
+    }
+    const wallet = new ethers.Wallet(privateKey)
+    const account: Account = {
+      address: wallet.address,
+      name: name || `Imported Account ${this.state.accounts.length + 1}`,
+      index: this.state.accounts.length,
+      balances: {},
+      privateKey: wallet.privateKey // For development/testing only
+    }
+    this.state.accounts.push(account)
+    await this.saveState()
+    return account
   }
 }
 

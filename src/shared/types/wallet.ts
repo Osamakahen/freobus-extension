@@ -5,6 +5,7 @@ export interface Account {
   name?: string
   index: number
   balances: { [chainId: string]: string }
+  privateKey?: string // For development/testing only
 }
 
 export interface Network {

@@ -13,7 +13,7 @@ class FreoBusProvider extends EventEmitter {
   private isInitialized = false;
   private accounts: string[] = [];
   private chainId: string = "0xaa36a7";
-  private rpcUrl: string = "https://rpc.sepolia.org";
+  private rpcUrl: string = "https://sepolia.infura.io/v3/6131105f1e4c4841a297c5392effa977";
   private _eventEmitter: EventEmitter;
   private ethersProvider: ethers.providers.JsonRpcProvider;
 
@@ -132,7 +132,8 @@ class FreoBusProvider extends EventEmitter {
 
     // Inject the provider into the window object
     (window as any).ethereum = provider;
-    console.log('FreoBusProvider: Provider injected successfully');
+    (window as any).FreoBus = provider;
+    console.log('FreoBusProvider: Provider injected successfully as window.ethereum and window.FreoBus');
   }
 
   private async sendMessage(type: string, data: any) {

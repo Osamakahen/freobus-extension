@@ -2,15 +2,16 @@ import React from 'react'
 
 interface WelcomeProps {
   onGetStarted: () => void
+  onRestore: () => void
 }
 
-const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
+const Welcome: React.FC<WelcomeProps> = ({ onGetStarted, onRestore }) => {
   return (
     <div className="welcome-screen">
       <div className="welcome-content">
         <div className="welcome-hero">
           <div className="wallet-icon large" role="img" aria-label="Wallet icon" />
-          <h1>Welcome to <span className="brand-name">FreoBus</span></h1>
+          <h1>Welcome to <span className="brand-name">FreoWallet</span></h1>
           <p className="subtitle">Your Web3 MasterKey</p>
         </div>
 
@@ -48,7 +49,15 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
         >
           Get Started
         </button>
-
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={onRestore}
+          aria-label="Restore existing wallet"
+          style={{ marginTop: 12 }}
+        >
+          Restore Wallet
+        </button>
         <p className="terms-notice">
           By continuing, you agree to our <a href="#" target="_blank" rel="noopener noreferrer">Terms of Service</a>
         </p>

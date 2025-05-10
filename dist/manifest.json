@@ -45,6 +45,8 @@
       ],
       "resources": [
         "assets/*",
+        "assets/inpage.js",
+        "assets/events.js",
         "assets/ethers-vendor.js",
         "assets/react-vendor.js",
         "assets/content.js"

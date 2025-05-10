@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { crx } from '@crxjs/vite-plugin'
 import manifest from './manifest.json'
 import { resolve } from 'path'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 export default defineConfig({
   plugins: [
@@ -22,6 +23,12 @@ export default defineConfig({
           type: 'module' as const
         }
       }
+    }),
+    viteStaticCopy({
+      targets: [
+        { src: 'src/content/inpage.js', dest: 'assets' },
+        { src: 'src/content/inpage.ts', dest: 'assets' }
+      ]
     })
   ],
   build: {
@@ -39,7 +46,8 @@ export default defineConfig({
       input: {
         popup: resolve(__dirname, 'src/popup/index.html'),
         background: resolve(__dirname, 'src/background/index.ts'),
-        content: resolve(__dirname, 'src/content/index.ts')
+        content: resolve(__dirname, 'src/content/index.ts'),
+        inpage: resolve(__dirname, 'src/content/inpage.ts')
       },
       output: {
         entryFileNames: 'assets/[name].js',

@@ -4,7 +4,7 @@ A secure and seamless Web3 wallet for the FreoBus ecosystem.
 
 ## Overview
 
-FreoBus Wallet is a browser extension that provides a secure and user-friendly interface for managing Web3 assets and interacting with decentralized applications. Built with TypeScript and React, it offers a robust set of features for both users and developers.
+FreoBus Wallet is a browser extension that provides a secure and user-friendly interface for managing Web3 assets and interacting with decentralized applications. Built with TypeScript, React, and Vite, it offers a robust set of features for both users and developers.
 
 ## Key Features
 
@@ -58,21 +58,53 @@ npm run build
 
 ### Project Structure
 ```
-src/
-├── analytics/         # Analytics and metrics tracking
-├── components/        # React components
-├── content/          # Content scripts
-├── security/         # Security and encryption
-├── state/            # State management
-├── types/            # TypeScript type definitions
-└── utils/            # Utility functions
+freobus-extension/
+├── src/              # Source code
+│   ├── popup/       # Extension popup UI
+│   ├── background/  # Service worker and background scripts
+│   ├── content/     # Content scripts for dApp interaction
+│   └── utils/       # Utility functions
+├── extension/       # Extension-specific code
+├── icons/          # Extension icons
+├── scripts/        # Build and utility scripts
+└── docs/           # Documentation
 ```
 
 ### Available Scripts
-- `npm run build`: Build the extension
-- `npm run dev`: Start development server
-- `npm run test`: Run tests
+- `npm run build`: Build the extension using Vite
+- `npm run dev`: Start development server with hot reload
+- `npm run test`: Run tests using Vitest
 - `npm run lint`: Run linter
+- `npm run type-check`: Run TypeScript type checking
+
+### Development Setup
+1. Install dependencies: `npm install`
+2. Start development server: `npm run dev`
+3. The extension will be built to the `dist` directory
+4. Load the `dist` directory as an unpacked extension in your browser
+5. Changes will be automatically reflected after rebuilding
+
+## Extension Architecture
+
+### Service Worker
+The extension uses a service worker (background script) for:
+- Managing wallet state
+- Handling network requests
+- Processing transactions
+- Managing permissions
+
+### Content Scripts
+Content scripts are injected into web pages to:
+- Detect dApp connection requests
+- Handle wallet interactions
+- Manage permissions
+- Provide secure communication
+
+### Permissions
+The extension requires the following permissions:
+- `storage`: For managing wallet data and settings
+- `tabs`: For interacting with browser tabs
+- Host permissions for secure dApp communication
 
 ## Security Measures
 

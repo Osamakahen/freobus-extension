@@ -3,6 +3,7 @@ import Welcome from './components/Welcome';
 import CreateWallet from './components/CreateWallet';
 import WalletContent from './components/WalletContent';
 import { Network } from '../shared/types/wallet';
+import { SessionAnalyticsManager } from '../analytics/SessionAnalyticsManager';
 
 type Screen = 'welcome' | 'create' | 'wallet';
 
@@ -103,7 +104,7 @@ const App: React.FC = () => {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'welcome':
-        return <Welcome onGetStarted={handleGetStarted} />;
+        return <Welcome onGetStarted={handleGetStarted} onRestore={() => {}} />;
       case 'create':
         return (
           <CreateWallet
@@ -124,12 +125,18 @@ const App: React.FC = () => {
           />
         );
       default:
-        return <Welcome onGetStarted={handleGetStarted} />;
+        return <Welcome onGetStarted={handleGetStarted} onRestore={() => {}} />;
     }
   };
 
+  // Attach analytics manager to window for use in WalletContent
+  if (!(window as any).analyticsManager) {
+    (window as any).analyticsManager = new SessionAnalyticsManager();
+  }
+
   return (
-    <div className="app-container">
+    <div className="popup-container">
+      {error && <div className="error-message">{error}</div>}
       {renderScreen()}
     </div>
   );
