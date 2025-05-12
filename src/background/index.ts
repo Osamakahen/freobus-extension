@@ -37,7 +37,7 @@ const handleMessage: PlasmoMessaging.MessageHandler = async (req, res) => {
 }
 
 // Listen for messages from the inpage provider
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, _sender, sendResponse) => {
   if (message && message.type === 'FREOBUS_REQUEST') {
     const { id, args } = message;
     let result, error;
@@ -47,6 +47,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         const state = await import('../shared/services/wallet');
         const walletService = state.walletService;
         const walletState = await walletService.getState();
+        console.log('WalletState:', walletState); // Debug log
         if (walletState.isUnlocked && walletState.accounts.length > 0) {
           result = walletState.accounts.map(a => a.address);
         } else {
