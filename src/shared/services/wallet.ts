@@ -12,21 +12,39 @@ const DEFAULT_NETWORKS: Network[] = [
     name: "Ethereum Mainnet",
     rpcUrl: "https://mainnet.infura.io/v3/6131105f1e4c4841a297c5392effa977",
     currencySymbol: "ETH",
-    blockExplorerUrl: "https://etherscan.io"
+    blockExplorerUrl: "https://etherscan.io",
+    nativeCurrency: {
+      name: "Ether",
+      symbol: "ETH",
+      decimals: 18
+    },
+    blockExplorerUrls: ["https://etherscan.io"]
   },
   {
     chainId: "0xaa36a7",
     name: "Sepolia Testnet",
     rpcUrl: "https://sepolia.infura.io/v3/6131105f1e4c4841a297c5392effa977",
     currencySymbol: "ETH",
-    blockExplorerUrl: "https://sepolia.etherscan.io"
+    blockExplorerUrl: "https://sepolia.etherscan.io",
+    nativeCurrency: {
+      name: "Sepolia Ether",
+      symbol: "ETH",
+      decimals: 18
+    },
+    blockExplorerUrls: ["https://sepolia.etherscan.io"]
   },
   {
     chainId: "0xa",
     name: "Optimism",
-    rpcUrl: "https://mainnet.optimism.io",
+    rpcUrl: "https://optimism-mainnet.infura.io/v3/6131105f1e4c4841a297c5392effa977",
     currencySymbol: "ETH",
-    blockExplorerUrl: "https://optimistic.etherscan.io"
+    blockExplorerUrl: "https://optimistic.etherscan.io",
+    nativeCurrency: {
+      name: "Ether",
+      symbol: "ETH",
+      decimals: 18
+    },
+    blockExplorerUrls: ["https://optimistic.etherscan.io"]
   }
 ]
 
@@ -127,8 +145,13 @@ export class WalletService {
 
   // Vault Management
   async hasWallet(): Promise<boolean> {
-    await this.initPromise
-    return this.vault !== null
+    const storedVault = await storage.get<StoredVault>("vault");
+    return !!storedVault;
+  }
+
+  async isInitialized(): Promise<boolean> {
+    const storedVault = await storage.get<StoredVault>("vault");
+    return !!storedVault;
   }
 
   async resetWallet(): Promise<void> {
@@ -237,8 +260,10 @@ export class WalletService {
       this.vault = storedVault
       this.state.isUnlocked = true
       await this.saveState()
+      console.log('Wallet unlocked and state saved.')
       return true
     } catch (error) {
+      console.error('Failed to save wallet state after unlock:', error)
       return false
     }
   }
@@ -278,13 +303,92 @@ export class WalletService {
 
   // Network Management
   async setNetwork(chainId: string): Promise<void> {
-    const network = this.state.networks.find(n => n.chainId === chainId)
-    if (!network) {
-      throw new Error("Network not found")
+    console.log('[setNetwork] Received chainId:', chainId);
+    try {
+      // Always treat chainId as hex string for EIP-1193
+      const normalizedChainId = chainId.startsWith('0x')
+        ? chainId.toLowerCase()
+        : '0x' + parseInt(chainId, 10).toString(16);
+      console.log('[setNetwork] Normalized chainId:', normalizedChainId);
+      const network = this.state.networks.find(n =>
+        n.chainId.toLowerCase() === normalizedChainId ||
+        n.chainId === String(parseInt(normalizedChainId, 16)) ||
+        n.chainId === String(parseInt(chainId, 10))
+      );
+      if (!network) {
+        const msg = `[setNetwork] Network not found for chainId: ${normalizedChainId}`;
+        console.error(msg);
+        throw new Error(msg);
+      }
+      // Create a provider for the target network (hex chainId)
+      const provider = new ethers.providers.JsonRpcProvider(network.rpcUrl);
+      try {
+        // Verify the network is accessible
+        const networkInfo = await provider.getNetwork();
+        console.log('[setNetwork] Provider network info:', networkInfo);
+        if (
+          String(networkInfo.chainId) !== String(parseInt(normalizedChainId, 16)) &&
+          String(networkInfo.chainId) !== String(parseInt(chainId, 10))
+        ) {
+          const msg = `[setNetwork] Network chainId mismatch: expected ${normalizedChainId}, got ${networkInfo.chainId}`;
+          console.error(msg);
+          throw new Error(msg);
+        }
+        // Update the state
+        this.state.selectedNetwork = network;
+        try {
+          await this.saveState();
+        } catch (e) {
+          console.error('[setNetwork] Failed to save state:', e);
+        }
+        console.log('[setNetwork] Network switched to:', network);
+        // If window.ethereum exists, try to update it as well
+        if (window.ethereum) {
+          // Convert to hex for MetaMask
+          const hexChainId = network.chainId.startsWith('0x')
+            ? network.chainId
+            : '0x' + parseInt(network.chainId, 10).toString(16);
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: hexChainId }],
+            });
+          } catch (switchError: any) {
+            if (switchError.code === 4902) {
+              try {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [{
+                    chainId: hexChainId,
+                    chainName: network.name,
+                    nativeCurrency: network.nativeCurrency,
+                    rpcUrls: [network.rpcUrl],
+                    blockExplorerUrls: network.blockExplorerUrls,
+                    iconUrls: []
+                  }],
+                });
+              } catch (addError) {
+                const msg = `[setNetwork] Failed to add network to window.ethereum: ${addError}`;
+                console.error(msg);
+                throw new Error(msg);
+              }
+            } else {
+              const msg = `[setNetwork] Failed to update window.ethereum network: ${switchError && switchError.message ? switchError.message : switchError}`;
+              console.error(msg);
+              throw new Error(msg);
+            }
+          }
+        }
+      } catch (error) {
+        const msg = `[setNetwork] Failed to verify/connect to network: ${error instanceof Error ? error.message : String(error)}`;
+        console.error(msg);
+        throw new Error(msg);
+      }
+    } catch (error) {
+      const msg = `[setNetwork] Network switch failed: ${error instanceof Error ? error.message : String(error)}`;
+      console.error(msg);
+      throw new Error(msg);
     }
-
-    this.state.selectedNetwork = network
-    await this.saveState()
   }
 
   async addNetwork(network: Network): Promise<void> {
