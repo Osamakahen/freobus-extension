@@ -36,4 +36,32 @@ const handleMessage: PlasmoMessaging.MessageHandler = async (req, res) => {
   }
 }
 
+// Listen for messages from the inpage provider
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message && message.type === 'FREOBUS_REQUEST') {
+    const { id, args } = message;
+    let result, error;
+    try {
+      if (args.method === 'eth_accounts' || args.method === 'eth_requestAccounts') {
+        // Use walletService to check unlock status and get accounts
+        const state = await import('../shared/services/wallet');
+        const walletService = state.walletService;
+        const walletState = await walletService.getState();
+        if (walletState.isUnlocked && walletState.accounts.length > 0) {
+          result = walletState.accounts.map(a => a.address);
+        } else {
+          result = [];
+        }
+      } else {
+        // Handle other methods or ignore
+        result = null;
+      }
+    } catch (e: any) {
+      error = e.message || 'Unknown error';
+    }
+    sendResponse({ type: 'FREOBUS_RESPONSE', id, result, error });
+    return true;
+  }
+});
+
 export default handleMessage 
