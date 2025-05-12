@@ -1,65 +1,69 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { walletService } from '../../shared/services/wallet'
 
 interface WelcomeProps {
   onGetStarted: () => void
-  onRestore: () => void
+  onConnect: () => void
 }
 
-const Welcome: React.FC<WelcomeProps> = ({ onGetStarted, onRestore }) => {
+const Welcome: React.FC<WelcomeProps> = ({
+  onGetStarted,
+  onConnect
+}) => {
+  const [isChecking, setIsChecking] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleConnect = async () => {
+    setIsChecking(true)
+    setError(null)
+    try {
+      const isInitialized = await walletService.isInitialized()
+      if (isInitialized) {
+        onConnect()
+      } else {
+        setError('No existing wallet found. Please create a new wallet or restore an existing one.')
+      }
+    } catch (err) {
+      setError('Failed to check wallet status. Please try again.')
+    } finally {
+      setIsChecking(false)
+    }
+  }
+
   return (
-    <div className="welcome-screen">
-      <div className="welcome-content">
-        <div className="welcome-hero">
-          <div className="wallet-icon large" role="img" aria-label="Wallet icon" />
-          <h1>Welcome to <span className="brand-name">FreoWallet</span></h1>
-          <p className="subtitle">Your Web3 MasterKey</p>
+    <div className="welcome-container">
+      <div className="welcome-header">
+        <img src="/logo.png" alt="FreoWallet" className="logo" />
+        <h1>Welcome to FreoWallet</h1>
+        <p className="subtitle">Your secure gateway to Web3</p>
         </div>
 
-        <div className="features-list">
-          <div className="feature-item">
-            <span className="feature-icon">🛡️</span>
-            <div className="feature-text">
-              <h3>Secured</h3>
-              <p>Military-grade encryption for your digital assets</p>
-            </div>
-          </div>
-          <div className="feature-item">
-            <span className="feature-icon">⚡</span>
-            <div className="feature-text">
-              <h3>Seamless</h3>
-              <p>Effortless transactions and dApp interactions</p>
-            </div>
-          </div>
-          <div className="feature-item">
-            <span className="feature-icon">💎</span>
-            <div className="feature-text">
-              <h3>Rich</h3>
-              <p>Premium features for the modern Web3 explorer</p>
-            </div>
-          </div>
+      {error && (
+        <div className="error-message" role="alert">
+          {error}
         </div>
+      )}
+
+      <div className="action-buttons">
+        <button
+          className="action-button primary"
+          onClick={handleConnect}
+          disabled={isChecking}
+        >
+          {isChecking ? 'Checking...' : 'Connect Wallet'}
+        </button>
+
+        <button 
+          className="action-button secondary"
+          onClick={onGetStarted}
+        >
+          Create New Wallet
+        </button>
       </div>
 
       <div className="welcome-footer">
-        <button 
-          type="button"
-          className="connect-button"
-          onClick={onGetStarted}
-          aria-label="Get started with FreoBus Wallet"
-        >
-          Get Started
-        </button>
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={onRestore}
-          aria-label="Restore existing wallet"
-          style={{ marginTop: 12 }}
-        >
-          Restore Wallet
-        </button>
-        <p className="terms-notice">
-          By continuing, you agree to our <a href="#" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+        <p className="security-note">
+          🔒 Your keys, your crypto. We never store your seed phrase or private keys.
         </p>
       </div>
     </div>

@@ -13,7 +13,13 @@ export interface Network {
   name: string
   rpcUrl: string
   currencySymbol: string
-  blockExplorerUrl?: string
+  blockExplorerUrl: string
+  nativeCurrency: {
+    name: string
+    symbol: string
+    decimals: number
+  }
+  blockExplorerUrls: string[]
 }
 
 export interface WalletState {

@@ -42,7 +42,7 @@ export class StateManager extends EventEmitter {
 
   public async setNetwork(network: Network): Promise<void> {
     this.state.network = network;
-    this.state.chainId = network.chainId;
+    this.state.chainId = toHexChainId(network.chainId);
     this.emit('networkChanged', network);
     this.emit('stateChanged', this.getState());
   }
@@ -77,4 +77,10 @@ export class StateManager extends EventEmitter {
     this.emit('disconnected');
     this.emit('stateChanged', this.getState());
   }
+}
+
+function toHexChainId(chainId: string | number): string {
+  if (typeof chainId === "number") return "0x" + chainId.toString(16);
+  if (typeof chainId === "string" && chainId.startsWith("0x")) return chainId.toLowerCase();
+  return "0x" + parseInt(chainId as string, 10).toString(16);
 } 

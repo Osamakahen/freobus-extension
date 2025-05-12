@@ -17,6 +17,12 @@ import type { WalletRequest } from "../background/wallet-handler"
 // Inject provider as early as possible
 initializeProvider()
 
+function toHexChainId(chainId: string | number): string {
+  if (typeof chainId === "number") return "0x" + chainId.toString(16);
+  if (typeof chainId === "string" && chainId.startsWith("0x")) return chainId.toLowerCase();
+  return "0x" + parseInt(chainId as string, 10).toString(16);
+}
+
 async function switchNetwork(chainId: string) {
   const response = await sendToBackground({
     name: "wallet" as MessageName,
@@ -24,7 +30,7 @@ async function switchNetwork(chainId: string) {
       type: "SWITCH_CHAIN",
       payload: {
         origin: window.location.origin,
-        chainId
+        chainId: toHexChainId(chainId)
       }
     } as WalletRequest
   })
@@ -51,14 +57,22 @@ networkObserver.observe(document.body, {
 })
 
 // Listen for messages from the page
-window.addEventListener("message", (event) => {
-  if (event.source !== window) return
-  if (!event.data?.type?.startsWith("FREOBUS_")) return
+window.addEventListener("message", async (event) => {
+  if (event.source !== window) return;
+  if (event.data?.type !== "FREOBUS_REQUEST") return;
 
-  const { type } = event.data
-  switch (type) {
-    case "FREOBUS_READY":
-      window.postMessage({ type: "FREOBUS_PROVIDER_READY" }, "*")
-      break
+  const { id, args } = event.data;
+  try {
+    // Forward to background and get result
+    const result = await sendToBackground({
+      name: "wallet" as MessageName,
+      body: {
+        type: args.method,
+        payload: args.params
+      } as WalletRequest
+    });
+    window.postMessage({ type: "FREOBUS_RESPONSE", id, result }, "*");
+  } catch (error) {
+    window.postMessage({ type: "FREOBUS_RESPONSE", id, error: error instanceof Error ? error.message : String(error) }, "*");
   }
-}) 
+}); 

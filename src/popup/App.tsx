@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Welcome from './components/Welcome';
 import CreateWallet from './components/CreateWallet';
+import RestoreWallet from './components/RestoreWallet';
 import WalletContent from './components/WalletContent';
 import { Network } from '../shared/types/wallet';
 import { SessionAnalyticsManager } from '../analytics/SessionAnalyticsManager';
 
-type Screen = 'welcome' | 'create' | 'wallet';
+type Screen = 'welcome' | 'create' | 'restore' | 'wallet';
 
 interface WalletResponse {
   success: boolean;
@@ -52,14 +53,36 @@ const App: React.FC = () => {
     setCurrentScreen('create');
   };
 
-  const handleCreateWallet = async (password: string) => {
+  const handleConnect = async () => {
+    try {
+      setError(null);
+      const response = await new Promise<WalletResponse>((resolve) => {
+        chrome.runtime.sendMessage({ type: 'unlockWallet' }, resolve);
+      });
+
+      if (response.success) {
+        setWalletState(prev => ({ ...prev, isInitialized: true }));
+        setCurrentScreen('wallet');
+      } else {
+        throw new Error(response.error || 'Failed to unlock wallet');
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
+    }
+  };
+
+  const handleCreateWallet = async (password: string, mnemonic: string) => {
     try {
       setIsCreating(true);
       setError(null);
 
       const response = await new Promise<WalletResponse>((resolve) => {
         chrome.runtime.sendMessage(
-          { type: 'createWallet', data: { password } },
+          { type: 'createWallet', data: { password, mnemonic } },
           resolve
         );
       });
@@ -69,6 +92,35 @@ const App: React.FC = () => {
         setCurrentScreen('wallet');
       } else {
         throw new Error(response.error || 'Failed to create wallet');
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleRestoreWallet = async (password: string, mnemonic: string) => {
+    try {
+      setIsCreating(true);
+      setError(null);
+
+      const response = await new Promise<WalletResponse>((resolve) => {
+        chrome.runtime.sendMessage(
+          { type: 'restoreWallet', data: { password, mnemonic } },
+          resolve
+        );
+      });
+
+      if (response.success) {
+        setWalletState(prev => ({ ...prev, isInitialized: true }));
+        setCurrentScreen('wallet');
+      } else {
+        throw new Error(response.error || 'Failed to restore wallet');
       }
     } catch (err) {
       if (err instanceof Error) {
@@ -104,14 +156,26 @@ const App: React.FC = () => {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'welcome':
-        return <Welcome onGetStarted={handleGetStarted} onRestore={() => {}} />;
+        return (
+          <Welcome
+            onGetStarted={handleGetStarted}
+            onConnect={handleConnect}
+          />
+        );
       case 'create':
         return (
           <CreateWallet
             isCreating={isCreating}
             setIsCreating={setIsCreating}
-            error={error || ''}
+            error={error}
             onCreateWallet={handleCreateWallet}
+          />
+        );
+      case 'restore':
+        return (
+          <RestoreWallet
+            error={error}
+            onRestore={handleRestoreWallet}
           />
         );
       case 'wallet':
@@ -125,7 +189,12 @@ const App: React.FC = () => {
           />
         );
       default:
-        return <Welcome onGetStarted={handleGetStarted} onRestore={() => {}} />;
+        return (
+          <Welcome
+            onGetStarted={handleGetStarted}
+            onConnect={handleConnect}
+          />
+        );
     }
   };
 

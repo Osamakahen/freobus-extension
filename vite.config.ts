@@ -26,7 +26,6 @@ export default defineConfig({
     }),
     viteStaticCopy({
       targets: [
-        { src: 'src/content/inpage.js', dest: 'assets' },
         { src: 'src/content/inpage.ts', dest: 'assets' }
       ]
     })

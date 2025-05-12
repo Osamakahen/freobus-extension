@@ -20,9 +20,6 @@ interface FreoBusWindow extends Window {
     const removeListener = (event: string, handler: (...args: any[]) => void) => {
       listeners[event]?.delete(handler);
     };
-    const emit = (event: string, ...args: any[]) => {
-      listeners[event]?.forEach(fn => fn(...args));
-    };
 
     // The provider object should be compatible with EIP-1193
     const provider = {
@@ -44,7 +41,16 @@ interface FreoBusWindow extends Window {
       on,
       removeListener,
       isConnected: () => true,
-      chainId: '0xaa36a7',
+      get chainId() {
+        // Dynamically get chainId from wallet state if available
+        try {
+          const state = JSON.parse(localStorage.getItem('walletState') || '{}');
+          if (state.selectedNetwork && state.selectedNetwork.chainId) {
+            return state.selectedNetwork.chainId;
+          }
+        } catch {}
+        return '0x1'; // fallback to Ethereum Mainnet
+      },
       selectedAddress: null,
       enable: async () => []
     };

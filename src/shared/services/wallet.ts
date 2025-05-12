@@ -92,6 +92,12 @@ export class WalletService {
       
       if (storedState) {
         this.state = JSON.parse(storedState)
+        // Normalize selectedNetwork.chainId to hex
+        if (this.state.selectedNetwork && this.state.selectedNetwork.chainId) {
+          const oldId = this.state.selectedNetwork.chainId;
+          this.state.selectedNetwork.chainId = toHexChainId(this.state.selectedNetwork.chainId);
+          console.log(`[loadState] Normalized selectedNetwork.chainId from ${oldId} to ${this.state.selectedNetwork.chainId}`);
+        }
       }
     } catch (error) {
       console.error("Failed to load wallet state:", error)
@@ -305,16 +311,12 @@ export class WalletService {
   async setNetwork(chainId: string): Promise<void> {
     console.log('[setNetwork] Received chainId:', chainId);
     try {
-      // Always treat chainId as hex string for EIP-1193
-      const normalizedChainId = chainId.startsWith('0x')
-        ? chainId.toLowerCase()
-        : '0x' + parseInt(chainId, 10).toString(16);
+      const normalizedChainId = toHexChainId(chainId);
       console.log('[setNetwork] Normalized chainId:', normalizedChainId);
       const network = this.state.networks.find(n =>
-        n.chainId.toLowerCase() === normalizedChainId ||
-        n.chainId === String(parseInt(normalizedChainId, 16)) ||
-        n.chainId === String(parseInt(chainId, 10))
+        toHexChainId(n.chainId) === normalizedChainId
       );
+      console.log('[setNetwork] Comparing against networks:', this.state.networks.map(n => n.chainId));
       if (!network) {
         const msg = `[setNetwork] Network not found for chainId: ${normalizedChainId}`;
         console.error(msg);
@@ -327,10 +329,9 @@ export class WalletService {
         const networkInfo = await provider.getNetwork();
         console.log('[setNetwork] Provider network info:', networkInfo);
         if (
-          String(networkInfo.chainId) !== String(parseInt(normalizedChainId, 16)) &&
-          String(networkInfo.chainId) !== String(parseInt(chainId, 10))
+          toHexChainId(networkInfo.chainId) !== normalizedChainId
         ) {
-          const msg = `[setNetwork] Network chainId mismatch: expected ${normalizedChainId}, got ${networkInfo.chainId}`;
+          const msg = `[setNetwork] Network chainId mismatch: expected ${normalizedChainId}, got ${toHexChainId(networkInfo.chainId)}`;
           console.error(msg);
           throw new Error(msg);
         }
@@ -344,10 +345,7 @@ export class WalletService {
         console.log('[setNetwork] Network switched to:', network);
         // If window.ethereum exists, try to update it as well
         if (window.ethereum) {
-          // Convert to hex for MetaMask
-          const hexChainId = network.chainId.startsWith('0x')
-            ? network.chainId
-            : '0x' + parseInt(network.chainId, 10).toString(16);
+          const hexChainId = toHexChainId(network.chainId);
           try {
             await window.ethereum.request({
               method: 'wallet_switchEthereumChain',
@@ -612,4 +610,10 @@ export class WalletService {
   }
 }
 
-export const walletService = new WalletService() 
+export const walletService = new WalletService()
+
+function toHexChainId(chainId: string | number): string {
+  if (typeof chainId === "number") return "0x" + chainId.toString(16);
+  if (chainId.startsWith("0x")) return chainId.toLowerCase();
+  return "0x" + parseInt(chainId, 10).toString(16);
+} 

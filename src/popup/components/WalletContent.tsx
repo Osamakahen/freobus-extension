@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import type { Account, Network } from '../../shared/types/wallet'
 import ExportPrivateKeyModal from './ExportPrivateKeyModal'
 import WarningBanner from './WarningBanner'
+import { SessionAnalyticsDashboard } from '../../components/SessionAnalyticsDashboard'
 
 interface WalletContentProps {
   selectedAccount: Account | null
@@ -13,6 +14,7 @@ interface WalletContentProps {
   isLegacy?: boolean
   onMigrateLegacy?: () => void
   onExportLegacy?: () => void
+  analyticsManager?: any
 }
 
 const WalletContent: React.FC<WalletContentProps> = ({
@@ -24,8 +26,14 @@ const WalletContent: React.FC<WalletContentProps> = ({
   onSwitchNetwork,
   isLegacy,
   onMigrateLegacy,
-  onExportLegacy
+  onExportLegacy,
+  analyticsManager
 }) => {
+  // Early guard clause to prevent rendering if essential data is missing
+  if (!selectedNetwork || !selectedAccount) {
+    return <div className="wallet-content">Loading...</div>;
+  }
+
   const [activeTab, setActiveTab] = useState<'tokens' | 'nfts' | 'activity' | 'analytics' | 'mev'>('tokens')
   const [showNetworkList, setShowNetworkList] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -113,6 +121,11 @@ const WalletContent: React.FC<WalletContentProps> = ({
     }
   };
 
+  // Safer fallback for balance display
+  const chainId = selectedNetwork?.chainId;
+  const balance = chainId ? selectedAccount?.balances[chainId] : null;
+  const formatted = balance ? formatBalance(balance) : '0.0000';
+
   return (
     <div className="wallet-content">
       {/* Connection Status Bar */}
@@ -147,7 +160,10 @@ const WalletContent: React.FC<WalletContentProps> = ({
                   <div
                     key={network.chainId}
                     className={`network-option ${network.chainId === selectedNetwork?.chainId ? 'active' : ''}`}
-                    onClick={() => onSwitchNetwork(network.chainId)}
+                    onClick={() => {
+                      alert(`[NetworkDropdown] Switching to chainId: ${network.chainId}`);
+                      onSwitchNetwork(network.chainId);
+                    }}
                   >
                     <div className="network-option-indicator" />
                     <span>{network.name}</span>
@@ -207,10 +223,7 @@ const WalletContent: React.FC<WalletContentProps> = ({
       {/* Balance Display */}
       <div className="balance-display">
         <h2 className="balance-amount">
-          {selectedAccount?.balances[selectedNetwork?.chainId || ''] 
-            ? `${formatBalance(selectedAccount.balances[selectedNetwork?.chainId || ''])} ${selectedNetwork?.currencySymbol}`
-            : '0.0000 ETH'
-          }
+          {formatted} {selectedNetwork?.currencySymbol || 'ETH'}
         </h2>
         <p className="balance-fiat">$0.00 USD</p>
       </div>
@@ -278,10 +291,7 @@ const WalletContent: React.FC<WalletContentProps> = ({
               <div className="token-info">
                 <span className="token-name">Ethereum</span>
                 <span className="token-balance">
-                  {selectedAccount?.balances[selectedNetwork?.chainId || ''] 
-                    ? formatBalance(selectedAccount.balances[selectedNetwork?.chainId || ''])
-                    : '0.0000'
-                  } ETH
+                  {formatted} {selectedNetwork?.currencySymbol || 'ETH'}
                 </span>
               </div>
               <div className="token-value">$0.00 USD</div>
@@ -314,8 +324,11 @@ const WalletContent: React.FC<WalletContentProps> = ({
 
         {activeTab === 'analytics' && (
           <div style={{ padding: '10px' }}>
-            {/* <SessionAnalyticsDashboard analyticsManager={window.analyticsManager} /> */}
-            <p>Analytics dashboard coming soon.</p>
+            {analyticsManager ? (
+              <SessionAnalyticsDashboard analyticsManager={analyticsManager} />
+            ) : (
+              <p>Analytics dashboard coming soon.</p>
+            )}
           </div>
         )}
 

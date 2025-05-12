@@ -20,18 +20,23 @@ interface FreoBusWindow extends Window {
     const removeListener = (event: string, handler: (...args: any[]) => void) => {
       listeners[event]?.delete(handler);
     };
-    const emit = (event: string, ...args: any[]) => {
-      listeners[event]?.forEach(fn => fn(...args));
-    };
 
     // The provider object should be compatible with EIP-1193
     const provider = {
       isFreoWallet: true,
       isMetaMask: true,
-      request: async (args: { method: string; params?: any[] }) => {
-        // Example: emit events for demo purposes
-        if (args.method === 'eth_chainId') emit('chainChanged', '0xaa36a7');
-        return window.postMessage({ type: 'FREOBUS_REQUEST', args }, '*');
+      request: (args: { method: string; params?: any[] }) => {
+        return new Promise((resolve, reject) => {
+          const id = Math.random().toString(36).slice(2);
+          window.addEventListener("message", function handler(event) {
+            if (event.data && event.data.id === id && event.data.type === "FREOBUS_RESPONSE") {
+              window.removeEventListener("message", handler);
+              if (event.data.error) reject(event.data.error);
+              else resolve(event.data.result);
+            }
+          });
+          window.postMessage({ type: "FREOBUS_REQUEST", id, args }, "*");
+        });
       },
       on,
       removeListener,
