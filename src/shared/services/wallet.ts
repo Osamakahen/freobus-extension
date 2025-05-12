@@ -1,60 +1,22 @@
 import { ethers } from "ethers"
 import { Storage } from "@plasmohq/storage"
 import type { Account, Network, StoredVault, Transaction, WalletState } from "../types/wallet"
+// Import shared networks config
+const SHARED_NETWORKS: Network[] = require('../../../../shared/networks.json');
 
 const storage = new Storage()
 const TIMEOUT = 10000 // 10 seconds timeout
 
 // Default networks
-const DEFAULT_NETWORKS: Network[] = [
-  {
-    chainId: "0x1",
-    name: "Ethereum Mainnet",
-    rpcUrl: "https://mainnet.infura.io/v3/6131105f1e4c4841a297c5392effa977",
-    currencySymbol: "ETH",
-    blockExplorerUrl: "https://etherscan.io",
-    nativeCurrency: {
-      name: "Ether",
-      symbol: "ETH",
-      decimals: 18
-    },
-    blockExplorerUrls: ["https://etherscan.io"]
-  },
-  {
-    chainId: "0xaa36a7",
-    name: "Sepolia Testnet",
-    rpcUrl: "https://sepolia.infura.io/v3/6131105f1e4c4841a297c5392effa977",
-    currencySymbol: "ETH",
-    blockExplorerUrl: "https://sepolia.etherscan.io",
-    nativeCurrency: {
-      name: "Sepolia Ether",
-      symbol: "ETH",
-      decimals: 18
-    },
-    blockExplorerUrls: ["https://sepolia.etherscan.io"]
-  },
-  {
-    chainId: "0xa",
-    name: "Optimism",
-    rpcUrl: "https://optimism-mainnet.infura.io/v3/6131105f1e4c4841a297c5392effa977",
-    currencySymbol: "ETH",
-    blockExplorerUrl: "https://optimistic.etherscan.io",
-    nativeCurrency: {
-      name: "Ether",
-      symbol: "ETH",
-      decimals: 18
-    },
-    blockExplorerUrls: ["https://optimistic.etherscan.io"]
-  }
-]
+// const DEFAULT_NETWORKS: Network[] = [ ... ]; // Remove this
 
 export class WalletService {
   private vault: StoredVault | null = null
   private state: WalletState = {
     isUnlocked: false,
     accounts: [],
-    networks: DEFAULT_NETWORKS,
-    selectedNetwork: DEFAULT_NETWORKS[0],
+    networks: SHARED_NETWORKS,
+    selectedNetwork: SHARED_NETWORKS[0],
     connectedSites: {} as {
       [origin: string]: {
         chainId: string;
@@ -311,7 +273,10 @@ export class WalletService {
   async setNetwork(chainId: string): Promise<void> {
     console.log('[setNetwork] Received chainId:', chainId);
     try {
-      const normalizedChainId = toHexChainId(chainId);
+      // Always treat chainId as hex string for EIP-1193
+      const normalizedChainId = (typeof chainId === 'string' && chainId.startsWith('0x'))
+        ? chainId.toLowerCase()
+        : '0x' + parseInt(chainId, 10).toString(16);
       console.log('[setNetwork] Normalized chainId:', normalizedChainId);
       const network = this.state.networks.find(n =>
         toHexChainId(n.chainId) === normalizedChainId
@@ -377,15 +342,13 @@ export class WalletService {
             }
           }
         }
-      } catch (error) {
-        const msg = `[setNetwork] Failed to verify/connect to network: ${error instanceof Error ? error.message : String(error)}`;
-        console.error(msg);
-        throw new Error(msg);
+      } catch (e) {
+        console.error('[setNetwork] Provider/network error:', e);
+        throw e;
       }
-    } catch (error) {
-      const msg = `[setNetwork] Network switch failed: ${error instanceof Error ? error.message : String(error)}`;
-      console.error(msg);
-      throw new Error(msg);
+    } catch (err) {
+      console.error('[setNetwork] Error:', err);
+      throw err;
     }
   }
 
@@ -479,15 +442,20 @@ export class WalletService {
   }
 
   async updateNetwork(origin: string, chainId: string): Promise<void> {
+    console.log('[updateNetwork] origin:', origin, 'chainId:', chainId);
     if (this.pendingNetworkUpdate) {
       clearTimeout(this.pendingNetworkUpdate)
     }
-    
     this.pendingNetworkUpdate = setTimeout(async () => {
-      await this.setNetwork(chainId)
-      if (this.state.connectedSites[origin]) {
-        this.state.connectedSites[origin].chainId = chainId
-        await this.saveState()
+      try {
+        await this.setNetwork(chainId)
+        if (this.state.connectedSites[origin]) {
+          this.state.connectedSites[origin].chainId = chainId
+          await this.saveState()
+        }
+        console.log('[updateNetwork] Network updated for origin:', origin);
+      } catch (e) {
+        console.error('[updateNetwork] Error updating network:', e);
       }
     }, 500)
   }

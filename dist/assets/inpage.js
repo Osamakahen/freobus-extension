@@ -1,1 +1,4 @@
+// [BUILD OUTPUT - KEEP LATEST VERSION THAT MATCHES SHARED CONFIG]
+// This file should be rebuilt from source. If you see merge markers, remove them and keep the version that works with the shared config and types.
+
 !function(){const e=window;if(e.ethereum||e.FreoBus)return;const t={},a={isFreoWallet:!0,isMetaMask:!0,request:e=>new Promise(((t,a)=>{const n=Math.random().toString(36).slice(2);window.addEventListener("message",(function e(s){s.data&&s.data.id===n&&"FREOBUS_RESPONSE"===s.data.type&&(window.removeEventListener("message",e),s.data.error?a(s.data.error):t(s.data.result))})),window.postMessage({type:"FREOBUS_REQUEST",id:n,args:e},"*")})),on:(e,a)=>{t[e]||(t[e]=new Set),t[e].add(a)},removeListener:(e,a)=>{var n;null==(n=t[e])||n.delete(a)},isConnected:()=>!0,chainId:"0xaa36a7",selectedAddress:null,enable:async()=>[]};e.ethereum=a,e.FreoBus=a}();

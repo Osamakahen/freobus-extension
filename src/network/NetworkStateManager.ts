@@ -23,6 +23,12 @@ interface ChainConfig {
   rpcOptimization?: RPCOptimization;
 }
 
+function toHexChainId(chainId: string | number): string {
+  if (typeof chainId === "number") return "0x" + chainId.toString(16);
+  if (typeof chainId === "string" && chainId.startsWith("0x")) return chainId.toLowerCase();
+  return "0x" + parseInt(chainId as string, 10).toString(16);
+}
+
 export class NetworkStateManager extends EventEmitter {
   private static readonly DEBOUNCE_DELAY = 500;
   private static readonly DEFAULT_CHAIN_CONFIGS: Map<string, ChainConfig> = new Map([
@@ -78,25 +84,33 @@ export class NetworkStateManager extends EventEmitter {
     if (this.debounceTimeout) {
       clearTimeout(this.debounceTimeout);
     }
-
+    const normalizedChainId = toHexChainId(chainId);
+    console.log('[NetworkStateManager] switchNetwork called with:', chainId, 'normalized:', normalizedChainId);
     this.debounceTimeout = setTimeout(async () => {
       try {
-        const config = this.chainConfigs.get(toHexChainId(chainId));
+        const config = this.chainConfigs.get(normalizedChainId);
         if (!config) {
-          throw new WalletError('UNSUPPORTED_CHAIN', `Unsupported chain ID: ${chainId}`);
+          const msg = `[NetworkStateManager] Unsupported chain ID: ${normalizedChainId}`;
+          console.error(msg);
+          this.emit('networkSwitchError', {
+            chainId: normalizedChainId,
+            error: msg
+          });
+          throw new WalletError('UNSUPPORTED_CHAIN', msg);
         }
 
-        const state = await this.initializeNetworkState(chainId);
-        this.networkStates.set(toHexChainId(chainId), state);
+        const state = await this.initializeNetworkState(normalizedChainId);
+        this.networkStates.set(normalizedChainId, state);
         
         this.emit('networkSwitched', {
-          chainId: toHexChainId(chainId),
+          chainId: normalizedChainId,
           state,
           config
         });
       } catch (error) {
+        console.error('[NetworkStateManager] networkSwitchError:', error);
         this.emit('networkSwitchError', {
-          chainId: toHexChainId(chainId),
+          chainId: normalizedChainId,
           error
         });
         throw error;
@@ -140,29 +154,34 @@ export class NetworkStateManager extends EventEmitter {
   }
 
   public async getNetworkState(chainId: string): Promise<NetworkState | null> {
-    return this.networkStates.get(toHexChainId(chainId)) || null;
+    const normalizedChainId = toHexChainId(chainId);
+    return this.networkStates.get(normalizedChainId) || null;
   }
 
   public async updateNetworkState(chainId: string, state: Partial<NetworkState>): Promise<void> {
-    const currentState = this.networkStates.get(toHexChainId(chainId));
+    const normalizedChainId = toHexChainId(chainId);
+    const currentState = this.networkStates.get(normalizedChainId);
     if (!currentState) {
-      throw new WalletError('INVALID_CHAIN', `No state found for chain ID: ${chainId}`);
+      const msg = `[NetworkStateManager] No state found for chain ID: ${normalizedChainId}`;
+      console.error(msg);
+      throw new WalletError('INVALID_CHAIN', msg);
     }
-
     const newState = { ...currentState, ...state };
-    this.networkStates.set(toHexChainId(chainId), newState);
-    this.emit('networkStateUpdated', { chainId: toHexChainId(chainId), state: newState });
+    this.networkStates.set(normalizedChainId, newState);
+    console.log('[NetworkStateManager] Emitting networkStateUpdated:', normalizedChainId, newState);
+    this.emit('networkStateUpdated', { chainId: normalizedChainId, state: newState });
   }
 
   public async initializeNetworkState(chainId: string): Promise<NetworkState> {
-    const config = this.chainConfigs.get(toHexChainId(chainId));
+    const normalizedChainId = toHexChainId(chainId);
+    const config = this.chainConfigs.get(normalizedChainId);
     if (!config) {
-      throw new WalletError('INVALID_CHAIN', `Invalid chain ID: ${chainId}`);
+      const msg = `[NetworkStateManager] Invalid chain ID: ${normalizedChainId}`;
+      console.error(msg);
+      throw new WalletError('INVALID_CHAIN', msg);
     }
-
-    // Initialize network state
     return {
-      chainId: toHexChainId(chainId),
+      chainId: normalizedChainId,
       isConnected: true,
       lastBlockNumber: 0,
       gasPrice: 0,
@@ -179,11 +198,4 @@ export class NetworkStateManager extends EventEmitter {
     }
     this.networkStates.clear();
   }
-}
-
-// Utility function for chainId normalization
-function toHexChainId(chainId: string | number): string {
-  if (typeof chainId === "number") return "0x" + chainId.toString(16);
-  if (typeof chainId === "string" && chainId.startsWith("0x")) return chainId.toLowerCase();
-  return "0x" + parseInt(chainId as string, 10).toString(16);
 } 
