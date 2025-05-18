@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FreoBus Wallet",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A secure and seamless Web3 wallet for the FreoBus ecosystem",
   "permissions": [
     "storage",
@@ -24,34 +24,20 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "service_worker": "service-worker-loader.js",
+    "service_worker": "background.js",
     "type": "module"
   },
   "content_scripts": [
     {
-      "js": [
-        "assets/index.ts-loader.js"
-      ],
-      "matches": [
-        "https://*/*"
-      ],
+      "matches": ["https://*/*"],
+      "js": ["content.js"],
       "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
     {
-      "matches": [
-        "https://*/*"
-      ],
-      "resources": [
-        "assets/*",
-        "assets/inpage.js",
-        "assets/events.js",
-        "assets/ethers-vendor.js",
-        "assets/react-vendor.js",
-        "assets/content.js"
-      ],
-      "use_dynamic_url": false
+      "resources": ["assets/*", "assets/inpage.js"],
+      "matches": ["https://*/*"]
     }
   ]
-}
+} 

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FreoBus Wallet",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A secure and seamless Web3 wallet for the FreoBus ecosystem",
   "permissions": [
     "storage",
@@ -24,13 +24,13 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "service_worker": "src/background/index.ts",
+    "service_worker": "background.js",
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://*/*"],
-      "js": ["src/content/index.ts"],
+      "js": ["content.js"],
       "run_at": "document_start"
     }
   ],

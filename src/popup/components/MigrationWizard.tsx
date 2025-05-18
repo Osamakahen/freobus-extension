@@ -1,31 +1,34 @@
 import React, { useState } from 'react';
-import { ethers } from 'ethers';
 import SeedPhraseBackupModal from './SeedPhraseBackupModal';
 
 interface MigrationWizardProps {
   legacyAccount: { privateKey: string; name?: string };
   onComplete: () => void;
   onCancel: () => void;
-  walletService: any;
 }
 
-const MigrationWizard: React.FC<MigrationWizardProps> = ({ legacyAccount, onComplete, onCancel, walletService }) => {
-  const [step, setStep] = useState(1);
+const MigrationWizard: React.FC<MigrationWizardProps> = ({ legacyAccount, onComplete, onCancel }) => {
+  const [step, setStep] = useState<number>(1);
   const [mnemonic, setMnemonic] = useState<string | null>(null);
   const [isMigrating, setIsMigrating] = useState(false);
 
   const startMigration = async () => {
-    const wallet = await ethers.Wallet.createRandom();
-    setMnemonic(wallet.mnemonic.phrase);
+    chrome.runtime.sendMessage({ action: "create_wallet" }, (response) => {
+      if (response && response.success) {
+        setMnemonic(response.mnemonic);
     setStep(2);
+      } else {
+        // handle error
+      }
+    });
   };
 
   const handleBackupConfirm = async () => {
     setIsMigrating(true);
-    await walletService.createWallet('temp-migrate-password', true, mnemonic);
-    await walletService.importAccountFromPrivateKey(legacyAccount.privateKey, legacyAccount.name || 'Migrated Account');
+    chrome.runtime.sendMessage({ action: "import_account", data: { privateKey: legacyAccount.privateKey, name: legacyAccount.name || 'Migrated Account' } }, () => {
     setIsMigrating(false);
     setStep(3);
+    });
   };
 
   return (
@@ -40,7 +43,12 @@ const MigrationWizard: React.FC<MigrationWizardProps> = ({ legacyAccount, onComp
           </>
         )}
         {step === 2 && mnemonic && (
-          <SeedPhraseBackupModal mnemonic={mnemonic} onConfirm={handleBackupConfirm} />
+          <SeedPhraseBackupModal
+            mnemonic={mnemonic}
+            onConfirm={handleBackupConfirm}
+            onBack={() => setStep(1)}
+            isLoading={false}
+          />
         )}
         {step === 3 && (
           <>

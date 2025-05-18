@@ -1,0 +1,110 @@
+.create-wallet-container {
+  padding: 24px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.error-message {
+  color: #dc3545;
+  margin-bottom: 16px;
+  padding: 8px;
+  background: #fff5f5;
+  border-radius: 4px;
+}
+
+.seed-phrase-modal {
+  padding: 24px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.seed-phrase-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.seed-word {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.word-number {
+  color: #6c757d;
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.primary-button {
+  background: #008080;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.primary-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.secondary-button {
+  background: #f8f9fa;
+  color: #212529;
+  border: 1px solid #dee2e6;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 16px 0;
+}
+
+.confirmation-checkbox {
+  margin: 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirmation-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+} 

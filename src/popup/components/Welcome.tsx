@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
-import { walletService } from '../../shared/services/wallet'
 
 interface WelcomeProps {
   onGetStarted: () => void
-  onConnect: () => void
+  onConnect?: () => void
 }
 
 const Welcome: React.FC<WelcomeProps> = ({
@@ -17,15 +16,16 @@ const Welcome: React.FC<WelcomeProps> = ({
     setIsChecking(true)
     setError(null)
     try {
-      const isInitialized = await walletService.isInitialized()
-      if (isInitialized) {
-        onConnect()
-      } else {
-        setError('No existing wallet found. Please create a new wallet or restore an existing one.')
-      }
+      chrome.runtime.sendMessage({ type: 'checkWalletStatus' }, (response) => {
+        if (response && response.isInitialized) {
+          if (onConnect) onConnect()
+        } else {
+          setError('No existing wallet found. Please create a new wallet or restore an existing one.')
+        }
+        setIsChecking(false)
+      });
     } catch (err) {
       setError('Failed to check wallet status. Please try again.')
-    } finally {
       setIsChecking(false)
     }
   }
@@ -33,7 +33,7 @@ const Welcome: React.FC<WelcomeProps> = ({
   return (
     <div className="welcome-container">
       <div className="welcome-header">
-        <img src="/logo.png" alt="FreoWallet" className="logo" />
+        {/* <img src="icons/logo.png" alt="FreoWallet" className="logo" /> */}
         <h1>Welcome to FreoWallet</h1>
         <p className="subtitle">Your secure gateway to Web3</p>
         </div>
@@ -45,14 +45,15 @@ const Welcome: React.FC<WelcomeProps> = ({
       )}
 
       <div className="action-buttons">
-        <button
-          className="action-button primary"
-          onClick={handleConnect}
-          disabled={isChecking}
-        >
-          {isChecking ? 'Checking...' : 'Connect Wallet'}
-        </button>
-
+        {onConnect && (
+          <button
+            className="action-button primary"
+            onClick={handleConnect}
+            disabled={isChecking}
+          >
+            {isChecking ? 'Checking...' : 'Connect Wallet'}
+          </button>
+        )}
         <button 
           className="action-button secondary"
           onClick={onGetStarted}

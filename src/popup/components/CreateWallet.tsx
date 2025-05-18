@@ -1,58 +1,83 @@
 import React, { useState } from 'react'
-import { ethers } from 'ethers'
 import SeedPhraseBackupModal from './SeedPhraseBackupModal'
 
 interface CreateWalletProps {
-  isCreating: boolean
-  setIsCreating: (creating: boolean) => void
-  error: string | null
-  onCreateWallet: (password: string, mnemonic: string) => Promise<void>
+  onBack: () => void
+  onWalletCreated: (walletState: any) => void
 }
 
-const CreateWallet: React.FC<CreateWalletProps> = ({
-  isCreating,
-  error,
-  onCreateWallet
-}) => {
+const CreateWallet: React.FC<CreateWalletProps> = ({ onBack, onWalletCreated }) => {
+  const [step, setStep] = useState<'password' | 'seed' | 'confirm'>('password')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [validationError, setValidationError] = useState<string | null>(null)
-  const [step, setStep] = useState<'password' | 'show' | 'confirm'>('password')
-  const [mnemonic, setMnemonic] = useState<string>('')
-  const [showBackupModal, setShowBackupModal] = useState(false)
+  const [mnemonic, setMnemonic] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Generate mnemonic after password is set
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setValidationError(null)
-    if (!password || !confirmPassword) {
-      setValidationError('Please enter both password fields')
-      return
-    }
+    setError(null)
+    
     if (password.length < 8) {
-      setValidationError('Password must be at least 8 characters long')
+      setError('Password must be at least 8 characters long')
       return
     }
     if (password !== confirmPassword) {
-      setValidationError('Passwords do not match')
+      setError('Passwords do not match')
       return
     }
-    // Generate mnemonic
-    const wallet = ethers.Wallet.createRandom()
-    setMnemonic(wallet.mnemonic.phrase)
-    setStep('show')
-    setShowBackupModal(true)
+    
+    setIsLoading(true)
+    try {
+      const response = await chrome.runtime.sendMessage({ 
+        action: "generate_mnemonic" 
+      })
+      
+      if (response.success) {
+        setMnemonic(response.mnemonic)
+        setStep('seed')
+      } else {
+        setError('Failed to generate wallet. Please try again.')
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSeedConfirm = async () => {
+    setIsLoading(true)
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: "create_wallet",
+        password,
+        mnemonic
+      })
+
+      if (response.success) {
+        console.log("Wallet created, calling onWalletCreated");
+        onWalletCreated(response.walletState);
+      } else {
+        setError('Failed to create wallet. Please try again.')
+        setStep('password')
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.')
+      setStep('password')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (step === 'password') {
     return (
-      <div className="popup-content">
+      <div className="create-wallet-container card">
+        <div className="accent-bar" />
+        <h2>Create New Wallet</h2>
         <form onSubmit={handlePasswordSubmit}>
-          {(error || validationError) && (
-            <div className="error-message" role="alert">
-              {error || validationError}
-            </div>
-          )}
+          {error && <div className="error-message">{error}</div>}
+          
           <div className="form-group">
             <label htmlFor="password">Create Password</label>
             <input
@@ -61,43 +86,58 @@ const CreateWallet: React.FC<CreateWalletProps> = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Create a strong password (min. 8 characters)"
-              disabled={isCreating}
+              disabled={isLoading}
               required
               minLength={8}
             />
-            <small className="input-help">This password will be used to protect your wallet</small>
+            <small>This password will be used to protect your wallet</small>
           </div>
+
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm New Password</label>
+            <label htmlFor="confirmPassword">Confirm Password</label>
             <input
               type="password"
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Enter the same password again"
-              disabled={isCreating}
+              disabled={isLoading}
               required
               minLength={8}
             />
           </div>
+
+          <div className="button-group">
+            <button 
+              type="button"
+              onClick={onBack}
+              className="secondary-button"
+              disabled={isLoading}
+            >
+              Back
+            </button>
           <button 
-            className={`connect-button ${isCreating ? 'loading' : ''}`}
             type="submit"
-            disabled={isCreating}
-            aria-busy={isCreating}
+              disabled={isLoading}
+              className="primary-button"
           >
-            {isCreating ? 'Creating Wallet...' : 'Create New Wallet'}
+              {isLoading ? 'Creating...' : 'Create Wallet'}
           </button>
+          </div>
         </form>
       </div>
     )
   }
 
-  if (showBackupModal && mnemonic) {
-    return <SeedPhraseBackupModal mnemonic={mnemonic} onConfirm={async () => {
-      setShowBackupModal(false);
-      await onCreateWallet(password, mnemonic);
-    }} />
+  if (step === 'seed') {
+    return (
+      <SeedPhraseBackupModal
+        mnemonic={mnemonic}
+        onConfirm={handleSeedConfirm}
+        onBack={() => setStep('password')}
+        isLoading={isLoading}
+      />
+    )
   }
 
   return null

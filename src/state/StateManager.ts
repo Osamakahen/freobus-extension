@@ -1,18 +1,17 @@
 import { EventEmitter } from 'events';
 import { WalletState, Network, Transaction, AccountInfo } from '../types';
+import networks from '../../../shared/networks.json';
 
 export class StateManager extends EventEmitter {
   private state: WalletState = {
     isConnected: false,
     accounts: [],
-    chainId: '0x1',
+    chainId: networks[0].chainId,
     balance: '0',
     network: {
-      chainId: '0x1',
-      name: 'Ethereum Mainnet',
-      rpcUrl: 'https://mainnet.infura.io/v3/',
-      symbol: 'ETH',
-      explorerUrl: 'https://etherscan.io'
+      ...networks[0],
+      symbol: networks[0].currencySymbol,
+      explorerUrl: networks[0].blockExplorerUrl
     }
   };
 

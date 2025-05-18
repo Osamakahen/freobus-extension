@@ -30,7 +30,6 @@ interface WalletState {
 
 const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
-  const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [walletState, setWalletState] = useState<WalletState>({
     isInitialized: false,
@@ -40,6 +39,10 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
+    // Send a test message to background on mount
+    chrome.runtime.sendMessage({ type: 'testMessage' }, (resp) => {
+      console.log('[Popup] testMessage response:', resp);
+    });
     // Check if wallet is already initialized
     chrome.runtime.sendMessage({ type: 'checkWalletStatus' }, (response: WalletResponse) => {
       if (response.isInitialized) {
@@ -75,38 +78,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleCreateWallet = async (password: string, mnemonic: string) => {
-    try {
-      setIsCreating(true);
-      setError(null);
-
-      const response = await new Promise<WalletResponse>((resolve) => {
-        chrome.runtime.sendMessage(
-          { type: 'createWallet', data: { password, mnemonic } },
-          resolve
-        );
-      });
-
-      if (response.success) {
-        setWalletState(prev => ({ ...prev, isInitialized: true }));
-        setCurrentScreen('wallet');
-      } else {
-        throw new Error(response.error || 'Failed to create wallet');
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred');
-      }
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
   const handleRestoreWallet = async (password: string, mnemonic: string) => {
     try {
-      setIsCreating(true);
       setError(null);
 
       const response = await new Promise<WalletResponse>((resolve) => {
@@ -128,28 +101,13 @@ const App: React.FC = () => {
       } else {
         setError('An unexpected error occurred');
       }
-    } finally {
-      setIsCreating(false);
     }
   };
 
-  const handleSwitchNetwork = async (chainId: string) => {
-    try {
-      const response = await new Promise<WalletResponse>((resolve) => {
-        chrome.runtime.sendMessage(
-          { type: 'switchNetwork', data: { chainId } },
-          resolve
-        );
-      });
-
-      if (response.success && response.network) {
-        setWalletState(prev => ({
-          ...prev,
-          selectedNetwork: response.network || null
-        }));
-      }
-    } catch (err) {
-      console.error('Failed to switch network:', err);
+  const handleWalletCreated = (walletStateFromResponse: WalletState) => {
+    if (walletStateFromResponse) {
+      setWalletState(walletStateFromResponse);
+      setCurrentScreen('wallet');
     }
   };
 
@@ -165,10 +123,8 @@ const App: React.FC = () => {
       case 'create':
         return (
           <CreateWallet
-            isCreating={isCreating}
-            setIsCreating={setIsCreating}
-            error={error}
-            onCreateWallet={handleCreateWallet}
+            onBack={() => setCurrentScreen('welcome')}
+            onWalletCreated={handleWalletCreated}
           />
         );
       case 'restore':
@@ -183,9 +139,6 @@ const App: React.FC = () => {
           <WalletContent
             selectedAccount={walletState.accounts[0] || null}
             selectedNetwork={walletState.selectedNetwork}
-            networks={walletState.networks}
-            error={error || ''}
-            onSwitchNetwork={handleSwitchNetwork}
           />
         );
       default:

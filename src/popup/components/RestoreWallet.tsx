@@ -1,10 +1,28 @@
 import React, { useState } from 'react'
-import { ethers } from 'ethers'
+// Removed ethers import to reduce popup bundle size
 
 interface RestoreWalletProps {
   onRestore: (password: string, mnemonic: string) => Promise<void>
   error: string | null
 }
+
+const gridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, 1fr)',
+  gap: '10px',
+  margin: '16px 0',
+  width: '100%'
+};
+
+const inputStyle: React.CSSProperties = {
+  borderRadius: '10px',
+  border: '1.5px solid #e0e0e0',
+  padding: '8px 10px',
+  fontSize: '1em',
+  textAlign: 'center',
+  outline: 'none',
+  width: '100%'
+};
 
 const RestoreWallet: React.FC<RestoreWalletProps> = ({
   onRestore,
@@ -12,23 +30,20 @@ const RestoreWallet: React.FC<RestoreWalletProps> = ({
 }) => {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [mnemonic, setMnemonic] = useState('')
+  const [words, setWords] = useState(Array(12).fill(''))
   const [validationError, setValidationError] = useState<string | null>(null)
   const [isRestoring, setIsRestoring] = useState(false)
 
-  const validateMnemonic = (phrase: string): boolean => {
-    try {
-      return ethers.utils.isValidMnemonic(phrase.trim())
-    } catch {
-      return false
-    }
+  const handleWordChange = (idx: number, value: string) => {
+    setWords(words => words.map((w, i) => (i === idx ? value.replace(/\s/g, '') : w)))
   }
+
+  const validateMnemonic = (words: string[]): boolean => words.every(w => w.trim().length > 0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setValidationError(null)
 
-    // Validate password
     if (!password || !confirmPassword) {
       setValidationError('Please enter both password fields')
       return
@@ -41,20 +56,14 @@ const RestoreWallet: React.FC<RestoreWalletProps> = ({
       setValidationError('Passwords do not match')
       return
     }
-
-    // Validate mnemonic
-    if (!mnemonic.trim()) {
-      setValidationError('Please enter your seed phrase')
+    if (!validateMnemonic(words)) {
+      setValidationError('Please enter all 12 seed words')
       return
     }
-    if (!validateMnemonic(mnemonic)) {
-      setValidationError('Invalid seed phrase. Please check and try again.')
-      return
-    }
-
+    const mnemonic = words.join(' ').trim()
     try {
       setIsRestoring(true)
-      await onRestore(password, mnemonic.trim())
+      await onRestore(password, mnemonic)
     } catch (err) {
       setValidationError(err instanceof Error ? err.message : 'Failed to restore wallet')
     } finally {
@@ -63,71 +72,80 @@ const RestoreWallet: React.FC<RestoreWalletProps> = ({
   }
 
   return (
-    <div className="restore-wallet">
-      <h2>Restore Your Wallet</h2>
-      <p className="subtitle">Enter your 12-word seed phrase to restore your wallet</p>
-
+    <div className="restore-wallet card" style={{ maxWidth: 400, margin: '0 auto', marginTop: 32 }}>
+      <div className="accent-bar" />
+      <h2 style={{ color: '#008080', fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>Restore Your Wallet</h2>
+      <p className="subtitle" style={{ textAlign: 'center', color: '#008080', marginBottom: 12 }}>Enter your 12-word seed phrase to restore your wallet</p>
       <form onSubmit={handleSubmit}>
         {(error || validationError) && (
           <div className="error-message" role="alert">
             {error || validationError}
           </div>
         )}
-
         <div className="form-group">
-          <label htmlFor="mnemonic">Seed Phrase</label>
-          <textarea
-            id="mnemonic"
-            value={mnemonic}
-            onChange={(e) => setMnemonic(e.target.value)}
-            placeholder="Enter your 12-word seed phrase"
-            rows={3}
-            disabled={isRestoring}
-            required
-          />
-          <small className="input-help">Enter the 12 words in order, separated by spaces</small>
+          <label style={{ color: '#008080', fontWeight: 600 }}>Seed Phrase</label>
+          <div style={gridStyle}>
+            {words.map((word, idx) => (
+              <input
+                key={idx}
+                type="text"
+                style={inputStyle}
+                value={word}
+                onChange={e => handleWordChange(idx, e.target.value)}
+                disabled={isRestoring}
+                autoComplete="off"
+                spellCheck={false}
+                inputMode="text"
+                placeholder={String(idx + 1)}
+                maxLength={16}
+              />
+            ))}
+          </div>
+          <small className="input-help">Enter the 12 words in order, one per box</small>
         </div>
-
         <div className="form-group">
-          <label htmlFor="password">New Password</label>
+          <label htmlFor="password" style={{ color: '#008080', fontWeight: 600 }}>New Password</label>
           <input
             type="password"
             id="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             placeholder="Create a new password (min. 8 characters)"
             disabled={isRestoring}
             required
             minLength={8}
+            style={inputStyle}
           />
           <small className="input-help">This password will be used to protect your restored wallet</small>
         </div>
-
         <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm New Password</label>
+          <label htmlFor="confirmPassword" style={{ color: '#008080', fontWeight: 600 }}>Confirm New Password</label>
           <input
             type="password"
             id="confirmPassword"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={e => setConfirmPassword(e.target.value)}
             placeholder="Enter the same password again"
             disabled={isRestoring}
             required
             minLength={8}
+            style={inputStyle}
           />
         </div>
-
-        <button
-          type="submit"
-          className="restore-button"
-          disabled={isRestoring}
-        >
-          {isRestoring ? 'Restoring...' : 'Restore Wallet'}
-        </button>
+        <div className="button-group" style={{ marginTop: 18 }}>
+          <button
+            type="submit"
+            className="primary-button"
+            disabled={isRestoring}
+            style={{ width: '100%' }}
+          >
+            {isRestoring ? 'Restoring...' : 'Restore Wallet'}
+          </button>
+        </div>
       </form>
-
-      <div className="security-warning">
-        <p>⚠️ Never share your seed phrase with anyone. It provides full access to your wallet and funds.</p>
+      <div className="warning-banner" style={{ marginTop: 18 }}>
+        <span role="img" aria-label="warning">⚠️</span>
+        Never share your seed phrase with anyone. It provides full access to your wallet and funds.
       </div>
     </div>
   )

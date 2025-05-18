@@ -1,4 +1,4 @@
-import { BigNumber } from "ethers"
+import { BigNumber } from 'ethers';
 
 export interface Account {
   address: string
@@ -14,6 +14,7 @@ export interface Network {
   rpcUrl: string
   currencySymbol: string
   blockExplorerUrl?: string
+  icon?: string // Optional icon URL for the network
   nativeCurrency: {
     name: string
     symbol: string
@@ -45,17 +46,31 @@ export interface WalletState {
   }
 }
 
+// NOTE: Use string for value/gas fields in popup/shared types to avoid ethers.js in popup bundle.
+// The background script can convert to BigNumber as needed.
 export interface Transaction {
-  from: string
-  to: string
-  value: BigNumber
-  data?: string
-  nonce?: number
-  gasLimit?: BigNumber
-  gasPrice?: BigNumber
-  maxFeePerGas?: BigNumber
-  maxPriorityFeePerGas?: BigNumber
-  chainId: string
+  hash?: string;
+  from: string;
+  to: string;
+  value: BigNumber;
+  data?: string;
+  nonce?: number;
+  gasLimit?: BigNumber;
+  gasPrice?: BigNumber;
+  maxFeePerGas?: BigNumber;
+  maxPriorityFeePerGas?: BigNumber;
+  chainId: string;
+  status?: 'pending' | 'confirmed' | 'failed';
+  timestamp?: number;
+  blockNumber?: number;
+}
+
+export interface TransactionStatus {
+  hash: string;
+  status: 'pending' | 'confirmed' | 'failed';
+  blockNumber?: number;
+  timestamp?: number;
+  from?: string;
 }
 
 export interface SignatureRequest {

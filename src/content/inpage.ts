@@ -32,7 +32,21 @@ interface FreoBusWindow extends Window {
             if (event.data && event.data.id === id && event.data.type === "FREOBUS_RESPONSE") {
               window.removeEventListener("message", handler);
               if (event.data.error) reject(event.data.error);
-              else resolve(event.data.result);
+              else {
+                // Patch: update selectedAddress and emit accountsChanged
+                if (
+                  args.method === "eth_accounts" ||
+                  args.method === "eth_requestAccounts"
+                ) {
+                  if (Array.isArray(event.data.result) && event.data.result.length > 0) {
+                    provider.selectedAddress = event.data.result[0];
+                    if (typeof provider.on === "function") {
+                      provider.on("accountsChanged", event.data.result);
+                    }
+                  }
+                }
+                resolve(event.data.result);
+              }
             }
           });
           window.postMessage({ type: "FREOBUS_REQUEST", id, args }, "*");

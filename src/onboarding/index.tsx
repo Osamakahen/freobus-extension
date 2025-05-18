@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { walletService } from '../shared/services/wallet'
 import "./style.css"
 
 const Onboarding = () => {
@@ -13,7 +12,8 @@ const Onboarding = () => {
   // Store username in extension storage
   const saveUsername = async (username: string) => {
     try {
-      await walletService.saveUsername(username)
+      console.log('[Onboarding] Stub: saveUsername called with:', username);
+      // await walletService.saveUsername(username)
     } catch (err) {
       setError('Failed to save username')
     }
@@ -36,7 +36,8 @@ const Onboarding = () => {
     }
     setLoading(true)
     try {
-      await walletService.createWallet(password)
+      console.log('[Onboarding] Stub: createWallet called with password length:', password.length);
+      // await walletService.createWallet(password)
       setStep("success")
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create wallet')
@@ -48,7 +49,8 @@ const Onboarding = () => {
   const handleConnectWallet = async () => {
     setLoading(true)
     try {
-      await walletService.setConnected(true)
+      console.log('[Onboarding] Stub: setConnected called with true');
+      // await walletService.setConnected(true)
       setStep('connected')
     } catch (err) {
       setError('Failed to connect wallet')

@@ -3,45 +3,97 @@ import React, { useState } from 'react';
 interface SeedPhraseBackupModalProps {
   mnemonic: string;
   onConfirm: () => void;
+  onBack: () => void;
+  isLoading: boolean;
 }
 
-const SeedPhraseBackupModal: React.FC<SeedPhraseBackupModalProps> = ({ mnemonic, onConfirm }) => {
-  const [copied, setCopied] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
+const SeedPhraseBackupModal: React.FC<SeedPhraseBackupModalProps> = ({
+  mnemonic,
+  onConfirm,
+  onBack,
+  isLoading
+}) => {
+  const [hasConfirmed, setHasConfirmed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState('');
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(mnemonic);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleConfirm = () => {
+    if (!hasConfirmed) {
+      setError('Please confirm that you have backed up your seed phrase');
+      return;
+    }
+    onConfirm();
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([mnemonic], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'freowallet-seed.txt';
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(mnemonic);
+      setCopyStatus('Copied!');
+      setTimeout(() => setCopyStatus(''), 2000);
+    } catch {
+      setCopyStatus('Failed to copy');
+      setTimeout(() => setCopyStatus(''), 2000);
+    }
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <h2>Your Seed Phrase</h2>
-        <div className="seed-phrase-box" tabIndex={0} aria-label="Seed phrase" style={{ userSelect: 'none', fontWeight: 600, fontSize: 18, letterSpacing: 1 }}>
-          {mnemonic}
+    <div className="seed-phrase-modal card">
+      <div className="accent-bar" />
+      <h2>Back Up Your Seed Phrase</h2>
+      <p className="warning-banner">
+        ⚠️ Write down these 12 words in order and keep them safe. 
+        Anyone with these words can access your wallet.
+      </p>
+
+      <div style={{ position: 'relative' }}>
+        <div className="seed-phrase-box">
+          {mnemonic.split(' ').map((word, index) => (
+            <div key={index} className="seed-word">
+              <span className="word-number">{index + 1}</span>
+              <span className="word">{word}</span>
+            </div>
+          ))}
         </div>
-        <div className="seed-actions" style={{ margin: '12px 0' }}>
-          <button onClick={handleCopy}>Copy</button>
-          <button onClick={handleDownload}>Download</button>
-          {copied && <span className="copy-status" style={{ color: 'green', marginLeft: 8 }}>Copied!</span>}
+        <button
+          type="button"
+          aria-label="Copy seed phrase"
+          className="secondary-button"
+          style={{ position: 'absolute', top: 10, right: 10, padding: '4px 12px', fontSize: '0.95em', zIndex: 2 }}
+          onClick={handleCopy}
+        >
+          {copyStatus ? copyStatus : 'Copy'}
+        </button>
         </div>
-        <div className="backup-confirm" style={{ margin: '12px 0' }}>
-          <input type="checkbox" id="confirm-backup" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />
-          <label htmlFor="confirm-backup" style={{ marginLeft: 8 }}>I understand that losing my seed phrase means losing access to my funds.</label>
+
+      <div className="confirmation-checkbox">
+        <input
+          type="checkbox"
+          id="backup-confirm"
+          checked={hasConfirmed}
+          onChange={(e) => setHasConfirmed(e.target.checked)}
+        />
+        <label htmlFor="backup-confirm">
+          I have backed up my seed phrase in a secure location
+        </label>
         </div>
-        <button className="connect-button" onClick={onConfirm} disabled={!confirmed}>Continue</button>
+
+      {error && <div className="error-message">{error}</div>}
+
+      <div className="button-group">
+        <button 
+          onClick={onBack}
+          className="secondary-button"
+          disabled={isLoading}
+        >
+          Back
+        </button>
+        <button
+          onClick={handleConfirm}
+          className="primary-button"
+          disabled={isLoading || !hasConfirmed}
+        >
+          {isLoading ? 'Creating Wallet...' : 'I Have Backed Up My Seed Phrase'}
+        </button>
       </div>
     </div>
   );

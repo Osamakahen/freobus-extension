@@ -1,0 +1,100 @@
+.network-selector {
+  position: relative;
+  z-index: 100;
+}
+
+.network-selector-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: #1a202c;
+}
+
+.network-selector-button:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.network-selector-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+}
+
+.network-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.network-name {
+  font-weight: 500;
+}
+
+.network-chevron {
+  font-size: 10px;
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.network-selector-button[aria-expanded="true"] .network-chevron {
+  transform: rotate(180deg);
+}
+
+.network-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+.network-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  color: #1a202c;
+  font-size: 14px;
+}
+
+.network-option:hover {
+  background: #f8fafc;
+}
+
+.network-option.active {
+  background: #f1f5f9;
+}
+
+.network-check {
+  margin-left: auto;
+  color: #10b981;
+  font-weight: bold;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

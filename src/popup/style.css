@@ -9,6 +9,11 @@
   --background-dark: #F8F8F8;
   --error-color: #DC2626;
   --success-color: #059669;
+  --gold: #FFD700;
+  --gold-dark: #FFC300;
+  --teal: #008080;
+  --teal-light: #43e97b;
+  --accent-gradient: linear-gradient(90deg, #43e97b 0%, #f9d423 100%);
 }
 
 /* Base styles */
@@ -919,4 +924,188 @@ form {
 .menu-icon {
   font-size: 16px;
   opacity: 0.8;
+}
+
+.card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  padding: 32px 28px 24px 28px;
+  max-width: 380px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.accent-bar {
+  width: 100%;
+  height: 5px;
+  background: var(--accent-gradient);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.primary-button {
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold-dark) 100%);
+  color: #333;
+  border: none;
+  border-radius: 18px;
+  padding: 0.8em 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin: 0.5em 0;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(249, 212, 35, 0.10);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 75%;
+  max-width: 240px;
+  min-width: 120px;
+  outline: none;
+}
+.primary-button:hover {
+  background: linear-gradient(90deg, var(--gold-dark) 0%, var(--gold) 100%);
+  box-shadow: 0 4px 16px rgba(249, 212, 35, 0.18);
+  transform: translateY(-2px);
+}
+
+.secondary-button {
+  background: none;
+  border: 1.5px solid var(--teal);
+  color: var(--teal);
+  border-radius: 18px;
+  padding: 0.7em 0;
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0.5em 0;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  width: 75%;
+  max-width: 200px;
+  min-width: 100px;
+}
+.secondary-button:hover {
+  background: var(--teal);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,128,128,0.10);
+}
+
+.seed-phrase-box {
+  background: #f8fafc;
+  border: 2px solid var(--teal);
+  border-radius: 14px;
+  padding: 18px 12px;
+  margin: 18px 0 12px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  font-size: 1.1em;
+  font-family: 'Fira Mono', monospace;
+}
+.seed-word {
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+.word-number {
+  color: var(--teal);
+  font-size: 0.95em;
+  font-weight: 700;
+  margin-right: 2px;
+}
+
+.warning-banner {
+  background: #fffbe6;
+  border: 1.5px solid var(--gold);
+  color: #b38600;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 14px 0 8px 0;
+  font-size: 0.97em;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+  max-width: 95%;
+  min-width: 0;
+  word-break: break-word;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.warning-banner .secondary-button {
+  font-size: 0.95em;
+  padding: 6px 14px;
+  min-width: 0;
+  max-width: 180px;
+  white-space: normal;
+  line-height: 1.2;
+  word-break: break-word;
+  margin: 0 0 0 12px;
+}
+@media (max-width: 400px) {
+  .warning-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .warning-banner .secondary-button {
+    width: 100%;
+    margin: 8px 0 0 0;
+    max-width: 100%;
+  }
+}
+
+.create-wallet-container h2,
+.seed-phrase-modal h2 {
+  color: var(--teal);
+  font-weight: 700;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+.create-wallet-container .form-group label {
+  color: var(--teal);
+  font-weight: 600;
+}
+
+.create-wallet-container .form-group input,
+.seed-phrase-modal input[type='password'],
+.seed-phrase-modal input[type='text'] {
+  border-radius: 12px;
+  border: 1.5px solid #e0e0e0;
+  padding: 10px 14px;
+  font-size: 1em;
+  margin-bottom: 6px;
+  transition: border 0.2s;
+}
+.create-wallet-container .form-group input:focus,
+.seed-phrase-modal input:focus {
+  border-color: var(--teal);
+  outline: none;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.confirmation-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 10px 0;
+  font-size: 1em;
 } 
